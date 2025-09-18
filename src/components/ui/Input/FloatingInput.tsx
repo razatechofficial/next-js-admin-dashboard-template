@@ -23,7 +23,7 @@ export const FloatingInput = forwardRef<HTMLInputElement, FloatingInputProps>(
           type={inputType}
           className={`
             peer w-full px-4 py-[0.95rem] border rounded-sm outline-none transition-all
-            placeholder-transparent
+            placeholder-transparent text-slate-900 dark:text-slate-200
             ${
               error
                 ? "border-red-500"

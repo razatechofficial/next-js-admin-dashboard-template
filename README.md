@@ -25,3 +25,5 @@ npm i react-toastify
 npm i @reduxjs/toolkit react-redux @tanstack/react-query
 
 npm i tailwind-merge
+
+npm i react-hook-form zod @hookform/resolvers
