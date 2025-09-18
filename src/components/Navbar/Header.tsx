@@ -42,7 +42,7 @@ function Header() {
             onClick={() => setNotificationsOpen(!notificationsOpen)}
             className="relative p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
           >
-            <MdNotifications className="h-5 w-5" />
+            <MdNotifications className="text-slate-900 dark:text-slate-100 h-5 w-5" />
             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
               3
             </span>
@@ -84,7 +84,7 @@ function Header() {
             onClick={() => setMessagesOpen(!messagesOpen)}
             className="relative p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
           >
-            <MdMessage className="h-5 w-5" />
+            <MdMessage className=" text-slate-900 dark:text-slate-100 h-5 w-5" />
             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
               5
             </span>
@@ -140,7 +140,7 @@ function Header() {
             className="relative h-8 w-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-              <MdPerson className="h-4 w-4" />
+              <MdPerson className="h-4 w-4 text-slate-900 dark:text-slate-100" />
             </div>
           </button>
 
@@ -148,21 +148,25 @@ function Header() {
             <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50">
               <div className="p-2">
                 <div className="flex flex-col space-y-1 px-2 py-1.5">
-                  <p className="text-sm font-medium">John Doe</p>
-                  <p className="text-xs text-slate-500">john.doe@example.com</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    John Doe
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-300">
+                    john.doe@example.com
+                  </p>
                 </div>
                 <div className="border-t border-slate-200 dark:border-slate-700 my-2" />
 
                 <div className="space-y-1">
-                  <button className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                    <MdPerson className="h-4 w-4" />
+                  <button className="flex w-full items-center gap-2 text-slate-900 dark:text-slate-100 rounded-md px-2 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    <MdPerson className="h-4 w-4 text-slate-900 dark:text-slate-100" />
                     <span>Profile</span>
                   </button>
-                  <button className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                  <button className="flex w-full items-center text-slate-900 dark:text-slate-100 gap-2 rounded-md px-2 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                     <MdSettings className="h-4 w-4" />
                     <span>MdSettings</span>
                   </button>
-                  <button className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                  <button className="flex w-full items-center text-slate-900 dark:text-slate-100 gap-2 rounded-md px-2 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                     <MdCreditCard className="h-4 w-4" />
                     <span>Billing</span>
                   </button>
@@ -170,7 +174,7 @@ function Header() {
 
                 <div className="border-t border-slate-200 dark:border-slate-700 my-2" />
 
-                <button className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                <button className="flex w-full items-center text-slate-900 dark:text-slate-100 gap-2 rounded-md px-2 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                   <MdLogout className="h-4 w-4" />
                   <span>Log out</span>
                 </button>
@@ -198,7 +202,7 @@ function SidebarTrigger() {
       onClick={toggleSidebar}
       className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
     >
-      <MdMenu className="h-4 w-4" />
+      <MdMenu className="h-4 w-4 text-slate-900 dark:text-slate-100" />
       <span className="sr-only">Toggle Sidebar</span>
     </button>
   );

@@ -52,7 +52,11 @@ export const SearchBar = ({
         <input
           type="search"
           placeholder="Search services..."
-          className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent"
+          className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 
+           border border-gray-300 dark:border-gray-700 rounded-lg 
+           focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 
+           focus:border-transparent text-gray-800 dark:text-gray-200 
+           placeholder-gray-400 dark:placeholder-gray-500"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -74,7 +78,7 @@ export const SearchBar = ({
         dark:[&::-webkit-scrollbar-thumb]:bg-slate-600"
           >
             {loading ? (
-              <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+              <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                 Searching...
               </div>
             ) : services.length > 0 ? (
@@ -105,7 +109,7 @@ export const SearchBar = ({
                 </Link>
               ))
             ) : (
-              <div className="px-4 py-2 text-base text-gray-500 dark:text-gray-400 text-center">
+              <div className="px-4 py-3 text-base text-gray-500 dark:text-gray-400 text-center">
                 No services found matching &#34;{query}&#34;
               </div>
             )}
