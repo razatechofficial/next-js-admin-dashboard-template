@@ -21,3 +21,5 @@ npm i next-themes
 npm i react-toastify
 
 npm i @reduxjs/toolkit react-redux @tanstack/react-query
+
+npm i tailwind-merge
