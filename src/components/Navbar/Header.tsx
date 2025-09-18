@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import {
-  MdSearch,
   MdNotifications,
   MdMessage,
   MdPerson,
@@ -26,30 +25,17 @@ function Header() {
         <div className="h-4 w-px bg-slate-200 dark:bg-slate-700" />
       </div>
 
-      {/* Center search bar with responsive width */}
-      <div className="absolute left-1/2 -translate-x-1/2 hidden md:block">
-        <div className="relative">
-          <MdSearch className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-          <input
-            type="search"
-            placeholder="MdSearch..."
-            className="w-[280px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent lg:w-[320px] xl:w-[400px]"
-          />
-        </div>
-      </div>
-
-      {/* Mobile search - shown only on small screens */}
-      <div className="relative md:hidden flex-1 mx-4">
-        <MdSearch className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-        <input
-          type="search"
-          placeholder="MdSearch..."
-          className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
+      {/* Center search bar for desktop */}
+      <div className="hidden flex-1 items-center justify-center md:flex">
+        <SearchBar showSuggestions className="max-w-xl" />
       </div>
 
       {/* Right side - Notifications, Messages, Theme, MdPerson Menu */}
       <div className="flex items-center gap-2 sm:gap-4">
+        {/* Mobile search dialog */}
+        <div className="md:hidden">
+          <SearchDialog />
+        </div>
         {/* Notifications Dropdown */}
         <div className="relative">
           <button
@@ -200,6 +186,8 @@ function Header() {
 // Import the useSidebarContext from CustomSidebar
 import { useSidebarContext } from "../Sidebar/Sidebar";
 import ThemeSwitch from "../Theme/ThemeSwitcher";
+import { SearchBar } from "./SearchBar";
+import { SearchDialog } from "./SearchDialog";
 
 // Sidebar Trigger Component (imported from CustomSidebar)
 function SidebarTrigger() {
