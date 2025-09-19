@@ -5,48 +5,300 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
-  MdChevronLeft,
-  MdMenu,
-  MdPerson,
-  MdSettings,
-  MdCreditCard,
-  MdLogout,
-  MdAutoAwesome,
-  MdVerified,
-  MdNotifications,
-  MdAdd,
-  MdUnfoldMore,
   MdDashboard,
   MdPeople,
-  MdWork,
   MdPersonAdd,
+  MdBusiness,
   MdTrendingUp,
   MdCalendarToday,
   MdCheckBox,
   MdMessage,
   MdCalculate,
   MdInventory,
-  MdConfirmationNumber,
+  MdSupport,
   MdShoppingCart,
   MdStore,
   MdBarChart,
-  MdPsychology,
-  MdAccountTree,
-  MdHelp,
+  MdChevronLeft,
+  MdChevronRight,
+  MdMenu,
+  MdPerson,
+  MdSettings,
+  MdCreditCard,
+  MdLogout as MdLogoutIcon,
+  MdAutoAwesome,
+  MdVerified,
+  MdNotifications,
+  MdAdd,
+  MdExpandMore,
+  MdEdit,
+  MdFlashOn,
+  MdHelpOutline,
 } from "react-icons/md";
+import { HiUpload, HiDocumentText } from "react-icons/hi";
+import { FaBrain, FaProjectDiagram } from "react-icons/fa";
 
-// Type definition for icon components
+// TypeScript Type Definitions
 type IconComponent = React.ComponentType<{ className?: string }>;
 
+// User and Company Types
+interface User {
+  name: string;
+  email: string;
+  avatar: string;
+}
+
+interface Company {
+  name: string;
+  logo: string;
+  slogan?: string;
+}
+
+// Team Types
+interface Team {
+  name: string;
+  logo: IconComponent;
+  plan: string;
+}
+
+// Navigation Item Types
+interface SubItem {
+  name: string;
+  url: string;
+  icon: string;
+}
+
+interface NavItem {
+  name: string;
+  url: string;
+  icon: string;
+  subItems?: SubItem[];
+}
+
+// Sidebar Section Types
+interface SidebarSection {
+  heading: string;
+  showHeading: boolean;
+  items: NavItem[];
+}
+
+// Main Data Structure Type
+interface SidebarData {
+  user: User;
+  company: Company;
+  teams: Team[];
+  topFixedItems: NavItem[];
+  sidebarSections: SidebarSection[];
+  bottomFixedItems: NavItem[];
+}
+
+// Component Prop Types
+interface SidebarProviderProps {
+  children: React.ReactNode;
+}
+
+interface NavExpansionProviderProps {
+  children: React.ReactNode;
+}
+
+interface SidebarProps {
+  showTeamSwitcherDropdown?: boolean;
+}
+
+interface SidebarContentProps {
+  showTeamSwitcherDropdown?: boolean;
+}
+
+interface TeamSwitcherProps {
+  forceExpanded?: boolean;
+  showDropdown?: boolean;
+}
+
+interface FixedNavItemsProps {
+  items: NavItem[];
+  forceExpanded?: boolean;
+  showHeading?: boolean;
+  heading?: string;
+}
+
+interface NavItemProps {
+  item: NavItem;
+  shouldShowExpanded: boolean;
+  getIconComponent: (iconName: string) => IconComponent;
+}
+
+interface NavSectionProps {
+  heading: string;
+  items: NavItem[];
+  forceExpanded?: boolean;
+  showHeading?: boolean;
+}
+
+interface NavUserProps {
+  forceExpanded?: boolean;
+}
+
+interface TooltipProps {
+  children: React.ReactNode;
+  content: string;
+  show: boolean;
+}
+
+interface TooltipProviderProps {
+  children: React.ReactNode;
+}
+
+interface TooltipContextType {
+  showTooltip: (content: string, x: number, y: number) => void;
+  hideTooltip: () => void;
+}
+
+interface TooltipState {
+  isVisible: boolean;
+  content: string;
+  x: number;
+  y: number;
+}
+
+interface SidebarContextType {
+  isOpen: boolean;
+  isMobile: boolean;
+  isMobileOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+  setIsMobileOpen: (open: boolean) => void;
+  toggleSidebar: () => void;
+}
+
+interface NavExpansionContextType {
+  expandedItem: string | null;
+  setExpandedItem: (itemName: string | null) => void;
+}
+
+// Icon mapping object
+const IconMap: Record<string, IconComponent> = {
+  // Navigation icons
+  LayoutDashboard: MdDashboard,
+  Users: MdPeople,
+  UserPlus: MdPersonAdd,
+  Briefcase: MdBusiness,
+  TrendingUp: MdTrendingUp,
+  Calendar: MdCalendarToday,
+  CheckSquare: MdCheckBox,
+  MessageSquare: MdMessage,
+  Calculator: MdCalculate,
+  PackageOpen: MdInventory,
+  TicketCheck: MdSupport,
+  ShoppingCart: MdShoppingCart,
+  Store: MdStore,
+  BarChart2: MdBarChart,
+  BrainCircuit: FaBrain,
+  Workflow: FaProjectDiagram,
+
+  // Action icons
+  Edit3: MdEdit,
+  Zap: MdFlashOn,
+  Upload: HiUpload,
+  FileText: HiDocumentText,
+  HelpCircle: MdHelpOutline,
+
+  // System icons
+  Settings: MdSettings,
+  CreditCard: MdCreditCard,
+  LogOut: MdLogoutIcon,
+  User: MdPerson,
+
+  // UI icons
+  ChevronLeft: MdChevronLeft,
+  ChevronRight: MdChevronRight,
+  ChevronDown: MdExpandMore,
+  PanelLeft: MdMenu,
+  Plus: MdAdd,
+  Bell: MdNotifications,
+  Sparkles: MdAutoAwesome,
+  BadgeCheck: MdVerified,
+  ChevronsUpDown: MdExpandMore,
+};
+
+// Tooltip Component
+function Tooltip({ children, content, show }: TooltipProps): React.JSX.Element {
+  const [isVisible, setIsVisible] = React.useState(false);
+  const [position, setPosition] = React.useState({ top: 0, left: 0 });
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const triggerRef = React.useRef<HTMLDivElement>(null);
+
+  const handleMouseEnter = (e: React.MouseEvent) => {
+    if (!show || !content) return;
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // Calculate position relative to the trigger element
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.top + rect.height / 2,
+        left: rect.right + 8, // 8px gap from sidebar
+      });
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      setIsVisible(true);
+    }, 300); // 300ms delay
+  };
+
+  const handleMouseLeave = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    setIsVisible(false);
+  };
+
+  React.useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  if (!show || !content) return <>{children}</>;
+
+  return (
+    <>
+      <div
+        ref={triggerRef}
+        className="relative"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {children}
+      </div>
+      {isVisible && (
+        <div
+          className="fixed z-[9999] bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-sm px-2 py-1 rounded-md shadow-lg whitespace-nowrap animate-in fade-in-0 zoom-in-95 duration-100 pointer-events-none"
+          style={{
+            top: `${position.top}px`,
+            left: `${position.left}px`,
+            transform: "translateY(-50%)",
+          }}
+        >
+          {content}
+          <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-900 dark:border-r-slate-100" />
+        </div>
+      )}
+    </>
+  );
+}
+
 // Sample data - same as the original
-const data = {
+const data: SidebarData = {
   user: {
     name: "Admin",
     email: "admin@averox.com",
     avatar: "/avatars/shadcn.jpg",
   },
   company: {
-    name: "Averox",
+    name: "AVEROX",
     logo: "/assets/images/logo.png",
     slogan: "Your Business, Our Solution",
   },
@@ -62,9 +314,29 @@ const data = {
       plan: "Startup",
     },
   ],
+  // Fixed top items (0-4 items)
+  topFixedItems: [
+    {
+      name: "Compose",
+      url: "/compose",
+      icon: "Edit3",
+    },
+    {
+      name: "New Contact",
+      url: "/contacts/new",
+      icon: "UserPlus",
+    },
+    {
+      name: "Quick Add",
+      url: "/quick-add",
+      icon: "Zap",
+    },
+  ],
+  // Scrollable middle content
   sidebarSections: [
     {
       heading: "Core",
+      showHeading: true,
       items: [
         {
           name: "Dashboard",
@@ -75,6 +347,23 @@ const data = {
           name: "Contacts",
           url: "/contacts",
           icon: "Users",
+          subItems: [
+            {
+              name: "All Contacts",
+              url: "/contacts/all",
+              icon: "Users",
+            },
+            {
+              name: "New Contact",
+              url: "/contacts/new",
+              icon: "UserPlus",
+            },
+            {
+              name: "Import Contacts",
+              url: "/contacts/import",
+              icon: "Upload",
+            },
+          ],
         },
         {
           name: "Accounts",
@@ -105,6 +394,7 @@ const data = {
     },
     {
       heading: "Communication",
+      showHeading: false,
       items: [
         {
           name: "Communication Center",
@@ -115,6 +405,7 @@ const data = {
     },
     {
       heading: "Business",
+      showHeading: true,
       items: [
         {
           name: "Accounting",
@@ -145,11 +436,29 @@ const data = {
     },
     {
       heading: "Analytics & Automation",
+      showHeading: true,
       items: [
         {
           name: "Reports",
           url: "/reports",
           icon: "BarChart2",
+          subItems: [
+            {
+              name: "Sales Reports",
+              url: "/reports/sales",
+              icon: "TrendingUp",
+            },
+            {
+              name: "Contact Reports",
+              url: "/reports/contacts",
+              icon: "Users",
+            },
+            {
+              name: "Custom Reports",
+              url: "/reports/custom",
+              icon: "FileText",
+            },
+          ],
         },
         {
           name: "Intelligence",
@@ -165,6 +474,7 @@ const data = {
     },
     {
       heading: "Help & Support",
+      showHeading: true,
       items: [
         {
           name: "Subscriptions",
@@ -180,6 +490,7 @@ const data = {
     },
     {
       heading: "System",
+      showHeading: false,
       items: [
         {
           name: "Settings",
@@ -189,22 +500,30 @@ const data = {
       ],
     },
   ],
+  // Fixed bottom items (0-3 items)
+  bottomFixedItems: [
+    {
+      name: "Logout",
+      url: "/logout",
+      icon: "LogOut",
+    },
+    {
+      name: "Profile",
+      url: "/profile",
+      icon: "User",
+    },
+    {
+      name: "Help & Support",
+      url: "/help",
+      icon: "HelpCircle",
+    },
+  ],
 };
 
 // Custom hook for mobile detection
-function useIsMobile() {
+function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = React.useState<boolean>(false);
   const [isHydrated, setIsHydrated] = React.useState(false);
-
-  // React.useEffect(() => {
-  //   const mql = window.matchMedia(`(max-width: 767px)`);
-  //   const onChange = () => {
-  //     setIsMobile(window.innerWidth < 768);
-  //   };
-  //   mql.addEventListener("change", onChange);
-  //   setIsMobile(window.innerWidth < 768);
-  //   return () => mql.removeEventListener("change", onChange);
-  // }, []);
 
   React.useEffect(() => {
     // Mark as hydrated on client side
@@ -225,7 +544,7 @@ function useIsMobile() {
 }
 
 // Custom hook for sidebar state
-function useSidebar() {
+function useSidebar(): SidebarContextType {
   const [isOpen, setIsOpen] = React.useState(true);
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const isMobile = useIsMobile();
@@ -262,11 +581,16 @@ function useSidebar() {
 }
 
 // Context for sidebar state
-const SidebarContext = React.createContext<ReturnType<
-  typeof useSidebar
-> | null>(null);
+const SidebarContext = React.createContext<SidebarContextType | null>(null);
 
-function SidebarProvider({ children }: { children: React.ReactNode }) {
+// Context for navigation items expansion state
+const NavExpansionContext = React.createContext<NavExpansionContextType | null>(
+  null
+);
+
+function SidebarProvider({
+  children,
+}: SidebarProviderProps): React.JSX.Element {
   const sidebar = useSidebar();
   return (
     <SidebarContext.Provider value={sidebar}>
@@ -275,7 +599,29 @@ function SidebarProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-function useSidebarContext() {
+function NavExpansionProvider({
+  children,
+}: NavExpansionProviderProps): React.JSX.Element {
+  const [expandedItem, setExpandedItem] = React.useState<string | null>(null);
+
+  return (
+    <NavExpansionContext.Provider value={{ expandedItem, setExpandedItem }}>
+      {children}
+    </NavExpansionContext.Provider>
+  );
+}
+
+function useNavExpansion(): NavExpansionContextType {
+  const context = React.useContext(NavExpansionContext);
+  if (!context) {
+    throw new Error(
+      "useNavExpansion must be used within a NavExpansionProvider"
+    );
+  }
+  return context;
+}
+
+function useSidebarContext(): SidebarContextType {
   const context = React.useContext(SidebarContext);
   if (!context) {
     throw new Error("useSidebarContext must be used within a SidebarProvider");
@@ -287,10 +633,7 @@ function useSidebarContext() {
 function TeamSwitcher({
   forceExpanded = false,
   showDropdown = true,
-}: {
-  forceExpanded?: boolean;
-  showDropdown?: boolean;
-}) {
+}: TeamSwitcherProps): React.JSX.Element | null {
   const { isMobile, isOpen } = useSidebarContext();
   const [activeTeam, setActiveTeam] = React.useState(data.teams[0]);
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
@@ -301,33 +644,36 @@ function TeamSwitcher({
   // Simple logo and company name display (no dropdown)
   if (!showDropdown) {
     return (
-      <div
-        className={`flex w-full items-center gap-3  ${
-          !shouldShowExpanded ? "justify-center" : ""
-        }`}
-      >
-        <div className="flex h-12 w-12 items-center justify-center bg-transaparent">
-          <Image
-            src={data.company.logo}
-            alt={data.company.name}
-            width={48}
-            height={48}
-            className="h-12 w-12 object-contain"
-          />
-        </div>
-        {shouldShowExpanded && (
-          <div className="flex-1 min-w-0">
-            <div className="truncate text-sm text-slate-900 dark:text-slate-100 font-bold">
-              {data.company.name}
-            </div>
-            {data.company.slogan && (
-              <div className="truncate text-xs text-slate-500 dark:text-slate-200">
-                {data.company.slogan}
-              </div>
-            )}
+      <Tooltip content={data.company.name} show={!shouldShowExpanded}>
+        <div
+          className={`flex w-full items-center gap-3  ${
+            !shouldShowExpanded ? "justify-center" : ""
+          }`}
+        >
+          <div className="flex h-12 w-12 items-center justify-center bg-transaparent">
+            <Image
+              src={data.company.logo}
+              alt={data.company.name}
+              width={48}
+              height={48}
+              className="h-12 w-12 object-contain"
+              priority
+            />
           </div>
-        )}
-      </div>
+          {shouldShowExpanded && (
+            <div className="flex-1 min-w-0">
+              <div className="truncate text-sm text-slate-900 dark:text-slate-100 font-bold">
+                {data.company.name}
+              </div>
+              {data.company.slogan && (
+                <div className="truncate text-xs text-slate-500 dark:text-slate-200">
+                  {data.company.slogan}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </Tooltip>
     );
   }
 
@@ -347,14 +693,14 @@ function TeamSwitcher({
         {shouldShowExpanded && (
           <>
             <div className="flex-1 min-w-0">
-              <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+              <div className="truncate text-sm font-medium">
                 {activeTeam.name}
               </div>
-              <div className="truncate text-xs text-slate-500 dark:text-slate-200">
+              <div className="truncate text-xs text-slate-500">
                 {activeTeam.plan}
               </div>
             </div>
-            <MdUnfoldMore className="h-4 w-4 text-slate-500" />
+            <MdExpandMore className="h-4 w-4 text-slate-500" />
           </>
         )}
       </button>
@@ -397,49 +743,27 @@ function TeamSwitcher({
   );
 }
 
-// Nav Section Component
-function NavSection({
-  heading,
+// Fixed Nav Items Component
+function FixedNavItems({
   items,
   forceExpanded = false,
-}: {
-  heading: string;
-  items: Array<{ name: string; url: string; icon: string }>;
-  forceExpanded?: boolean;
-}) {
+  showHeading = false,
+  heading,
+}: FixedNavItemsProps): React.JSX.Element | null {
   const pathname = usePathname();
   const { isOpen } = useSidebarContext();
   const shouldShowExpanded = forceExpanded || isOpen;
 
   const getIconComponent = (iconName: string): IconComponent => {
-    const iconMap: Record<string, IconComponent> = {
-      LayoutDashboard: MdDashboard,
-      Users: MdPeople,
-      Briefcase: MdWork,
-      UserPlus: MdPersonAdd,
-      TrendingUp: MdTrendingUp,
-      Calendar: MdCalendarToday,
-      CheckSquare: MdCheckBox,
-      MessageSquare: MdMessage,
-      Calculator: MdCalculate,
-      PackageOpen: MdInventory,
-      TicketCheck: MdConfirmationNumber,
-      ShoppingCart: MdShoppingCart,
-      Store: MdStore,
-      BarChart2: MdBarChart,
-      BrainCircuit: MdPsychology,
-      Workflow: MdAccountTree,
-      CreditCard: MdCreditCard,
-      HelpCircle: MdHelp,
-      Settings: MdSettings,
-    };
-
-    return iconMap[iconName] || MdHelp;
+    const Icon = IconMap[iconName] || MdHelpOutline;
+    return Icon as IconComponent;
   };
+
+  if (!items || items.length === 0) return null;
 
   return (
     <div className="p-2">
-      {shouldShowExpanded && (
+      {shouldShowExpanded && showHeading && heading && (
         <div className="text-xs font-medium text-slate-500 mb-2 px-2">
           {heading}
         </div>
@@ -450,19 +774,23 @@ function NavSection({
           const isActive = pathname === item.url;
 
           return (
-            <Link
+            <Tooltip
               key={item.name}
-              href={item.url}
-              className={`flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors ${
-                isActive
-                  ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium"
-                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100"
-              } ${!shouldShowExpanded ? "justify-center" : ""}`}
-              title={!shouldShowExpanded ? item.name : undefined}
+              content={item.name}
+              show={!shouldShowExpanded}
             >
-              <Icon className="h-4 w-4" />
-              {shouldShowExpanded && <span>{item.name}</span>}
-            </Link>
+              <Link
+                href={item.url}
+                className={`sidebar-item flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-all duration-200 ease-in-out transform ${
+                  isActive
+                    ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 hover:translate-x-0.5"
+                } ${!shouldShowExpanded ? "justify-center" : ""}`}
+              >
+                <Icon className="h-4 w-4" />
+                {shouldShowExpanded && <span>{item.name}</span>}
+              </Link>
+            </Tooltip>
           );
         })}
       </div>
@@ -470,38 +798,188 @@ function NavSection({
   );
 }
 
+// Nav Item Component with accordion behavior
+function NavItem({
+  item,
+  shouldShowExpanded,
+  getIconComponent,
+}: NavItemProps): React.JSX.Element {
+  const pathname = usePathname();
+  const { expandedItem, setExpandedItem } = useNavExpansion();
+  const Icon = getIconComponent(item.icon);
+  const isActive = pathname === item.url;
+  const hasSubItems = item.subItems && item.subItems.length > 0;
+  const isExpanded = expandedItem === item.name;
+
+  // Check if any sub-item is active
+  const isSubItemActive =
+    hasSubItems &&
+    item.subItems?.some((subItem: SubItem) => pathname === subItem.url);
+
+  const handleToggleSubItems = (e: React.MouseEvent) => {
+    if (hasSubItems && shouldShowExpanded) {
+      e.preventDefault();
+      // Accordion behavior: if clicking the same item, collapse it; otherwise expand this item
+      setExpandedItem(isExpanded ? null : item.name);
+    }
+  };
+
+  if (!hasSubItems) {
+    // Regular item without sub-items
+    return (
+      <Tooltip key={item.name} content={item.name} show={!shouldShowExpanded}>
+        <Link
+          href={item.url}
+          className={`sidebar-item flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-all duration-200 ease-in-out transform ${
+            isActive
+              ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium"
+              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 hover:translate-x-0.5"
+          } ${!shouldShowExpanded ? "justify-center" : ""}`}
+        >
+          <Icon className="h-4 w-4" />
+          {shouldShowExpanded && <span>{item.name}</span>}
+        </Link>
+      </Tooltip>
+    );
+  }
+
+  // Item with sub-items
+  return (
+    <div>
+      <Tooltip key={item.name} content={item.name} show={!shouldShowExpanded}>
+        <Link
+          href={item.url}
+          onClick={handleToggleSubItems}
+          className={`sidebar-item flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-all duration-200 ease-in-out transform ${
+            isActive || isSubItemActive
+              ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium"
+              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 hover:translate-x-0.5"
+          } ${!shouldShowExpanded ? "justify-center" : ""}`}
+        >
+          <Icon className="h-4 w-4" />
+          {shouldShowExpanded && (
+            <>
+              <span className="flex-1">{item.name}</span>
+              {hasSubItems && (
+                <MdChevronRight
+                  className={`h-4 w-4 transition-transform duration-300 ease-in-out ${
+                    isExpanded ? "rotate-90" : "rotate-0"
+                  }`}
+                />
+              )}
+            </>
+          )}
+        </Link>
+      </Tooltip>
+
+      {/* Sub-items with smooth animation */}
+      {hasSubItems && shouldShowExpanded && (
+        <div
+          className={`sidebar-sub-item overflow-hidden transition-all duration-300 ease-in-out ${
+            isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+          }`}
+        >
+          <div className="ml-6 mt-1 space-y-1 pb-1">
+            {item.subItems?.map((subItem: SubItem, index: number) => {
+              const SubIcon = getIconComponent(subItem.icon);
+              const isSubActive = pathname === subItem.url;
+
+              return (
+                <Link
+                  key={subItem.name}
+                  href={subItem.url}
+                  className={`sidebar-sub-item flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-all duration-200 ease-in-out transform ${
+                    isSubActive
+                      ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium"
+                      : "text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 hover:translate-x-1"
+                  } ${isExpanded ? "translate-x-0" : "-translate-x-2"}`}
+                  style={{
+                    transitionDelay: isExpanded ? `${index * 50}ms` : "0ms",
+                  }}
+                >
+                  <SubIcon className="h-3.5 w-3.5 transition-transform duration-200" />
+                  <span className="transition-all duration-200">
+                    {subItem.name}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Nav Section Component
+function NavSection({
+  heading,
+  items,
+  forceExpanded = false,
+  showHeading = true,
+}: NavSectionProps): React.JSX.Element {
+  const { isOpen } = useSidebarContext();
+  const shouldShowExpanded = forceExpanded || isOpen;
+
+  const getIconComponent = (iconName: string): IconComponent => {
+    const Icon = IconMap[iconName] || MdHelpOutline;
+    return Icon as IconComponent;
+  };
+
+  return (
+    <div className="p-2">
+      {shouldShowExpanded && showHeading && heading && (
+        <div className="text-xs font-medium text-slate-500 mb-2 px-2">
+          {heading}
+        </div>
+      )}
+      <div className="space-y-1">
+        {items.map((item) => (
+          <NavItem
+            key={item.name}
+            item={item}
+            shouldShowExpanded={shouldShowExpanded}
+            getIconComponent={getIconComponent}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Nav User Component
-function NavUser({ forceExpanded = false }: { forceExpanded?: boolean }) {
+function NavUser({ forceExpanded = false }: NavUserProps): React.JSX.Element {
   const { isMobile, isOpen } = useSidebarContext();
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const shouldShowExpanded = forceExpanded || isOpen;
 
   return (
     <div className="relative">
-      <button
-        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className={`flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${
-          !shouldShowExpanded ? "justify-center" : ""
-        }`}
-        title={!shouldShowExpanded ? data.user.name : undefined}
-      >
-        <div className="h-8 w-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-          <MdPerson className="h-4 w-4" />
-        </div>
-        {shouldShowExpanded && (
-          <>
-            <div className="flex-1 min-w-0">
-              <div className="truncate text-sm font-medium">
-                {data.user.name}
+      <Tooltip content={data.user.name} show={!shouldShowExpanded}>
+        <button
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          className={`flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${
+            !shouldShowExpanded ? "justify-center" : ""
+          }`}
+        >
+          <div className="h-8 w-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+            <MdPerson className="h-4 w-4 text-slate-700 dark:text-slate-100" />
+          </div>
+          {shouldShowExpanded && (
+            <>
+              <div className="flex-1 min-w-0">
+                <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                  {data.user.name}
+                </div>
+                <div className="truncate text-xs text-slate-500">
+                  {data.user.email}
+                </div>
               </div>
-              <div className="truncate text-xs text-slate-500">
-                {data.user.email}
-              </div>
-            </div>
-            <MdUnfoldMore className="h-4 w-4 text-slate-500" />
-          </>
-        )}
-      </button>
+              <MdExpandMore className="h-4 w-4 text-slate-500" />
+            </>
+          )}
+        </button>
+      </Tooltip>
 
       {isDropdownOpen && shouldShowExpanded && (
         <div className="absolute bottom-full left-0 right-0 mb-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50">
@@ -544,7 +1022,7 @@ function NavUser({ forceExpanded = false }: { forceExpanded?: boolean }) {
             <div className="border-t border-slate-200 dark:border-slate-700 my-2" />
 
             <button className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-              <MdLogout className="h-4 w-4" />
+              <MdLogoutIcon className="h-4 w-4" />
               Log out
             </button>
           </div>
@@ -557,9 +1035,17 @@ function NavUser({ forceExpanded = false }: { forceExpanded?: boolean }) {
 // Main Sidebar Component
 function Sidebar({
   showTeamSwitcherDropdown = true,
-}: {
-  showTeamSwitcherDropdown?: boolean;
-} = {}) {
+}: SidebarProps = {}): React.JSX.Element {
+  return (
+    <NavExpansionProvider>
+      <SidebarContent showTeamSwitcherDropdown={showTeamSwitcherDropdown} />
+    </NavExpansionProvider>
+  );
+}
+
+function SidebarContent({
+  showTeamSwitcherDropdown = true,
+}: SidebarContentProps = {}): React.JSX.Element {
   const { isOpen, isMobile, isMobileOpen, setIsMobileOpen } =
     useSidebarContext();
 
@@ -576,7 +1062,7 @@ function Sidebar({
 
         {/* Mobile Sidebar */}
         <div
-          className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transform transition-transform duration-200 ease-in-out md:hidden ${
+          className={`sidebar-transition fixed inset-y-0 left-0 z-50 w-64 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transform md:hidden ${
             isMobileOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
@@ -599,6 +1085,18 @@ function Sidebar({
               </div>
             </div>
 
+            {/* Top Fixed Items */}
+            <FixedNavItems
+              items={data.topFixedItems}
+              forceExpanded={true}
+              showHeading={false}
+            />
+
+            {/* Separator */}
+            {data.topFixedItems && data.topFixedItems.length > 0 && (
+              <div className="border-t border-slate-200 dark:border-slate-800" />
+            )}
+
             {/* Content - Scrollable */}
             <div className="flex-1 overflow-y-auto">
               {data.sidebarSections.map((section, index) => (
@@ -607,9 +1105,22 @@ function Sidebar({
                   heading={section.heading}
                   items={section.items}
                   forceExpanded={true}
+                  showHeading={section.showHeading}
                 />
               ))}
             </div>
+
+            {/* Separator */}
+            {data.bottomFixedItems && data.bottomFixedItems.length > 0 && (
+              <div className="border-t border-slate-200 dark:border-slate-800" />
+            )}
+
+            {/* Bottom Fixed Items */}
+            <FixedNavItems
+              items={data.bottomFixedItems}
+              forceExpanded={true}
+              showHeading={false}
+            />
 
             {/* Footer - Fixed */}
             <div className="p-2 border-t border-slate-200 dark:border-slate-800">
@@ -623,7 +1134,7 @@ function Sidebar({
 
   return (
     <div
-      className={`hidden md:block fixed left-0 top-0 h-screen bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-200 ease-in-out z-30 ${
+      className={`sidebar-transition hidden md:block fixed left-0 top-0 h-screen bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-30 ${
         isOpen ? "w-64" : "w-16"
       }`}
     >
@@ -633,6 +1144,14 @@ function Sidebar({
           <TeamSwitcher showDropdown={showTeamSwitcherDropdown} />
         </div>
 
+        {/* Top Fixed Items */}
+        <FixedNavItems items={data.topFixedItems} showHeading={false} />
+
+        {/* Separator */}
+        {data.topFixedItems && data.topFixedItems.length > 0 && (
+          <div className="border-t border-slate-200 dark:border-slate-800" />
+        )}
+
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           {data.sidebarSections.map((section, index) => (
@@ -640,9 +1159,18 @@ function Sidebar({
               key={index}
               heading={section.heading}
               items={section.items}
+              showHeading={section.showHeading}
             />
           ))}
         </div>
+
+        {/* Separator */}
+        {data.bottomFixedItems && data.bottomFixedItems.length > 0 && (
+          <div className="border-t border-slate-200 dark:border-slate-800" />
+        )}
+
+        {/* Bottom Fixed Items */}
+        <FixedNavItems items={data.bottomFixedItems} showHeading={true} />
 
         {/* Footer */}
         <div className="p-2 border-t border-slate-200 dark:border-slate-800">
