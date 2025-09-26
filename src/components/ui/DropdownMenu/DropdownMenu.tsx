@@ -99,7 +99,7 @@ function DropdownMenu({
         contentRef,
       }}
     >
-      <div className="relative inline-block" dir={dir}>
+      <div className="relative block" dir={dir}>
         {children}
       </div>
     </DropdownMenuContext.Provider>
@@ -865,7 +865,7 @@ const DropdownMenuSubContent = React.forwardRef<
   (
     {
       className,
-      side = "right",
+      side = "right", // eslint-disable-line @typescript-eslint/no-unused-vars
       align = "start", // eslint-disable-line @typescript-eslint/no-unused-vars
       sideOffset = 4, // eslint-disable-line @typescript-eslint/no-unused-vars
       alignOffset = 0, // eslint-disable-line @typescript-eslint/no-unused-vars
