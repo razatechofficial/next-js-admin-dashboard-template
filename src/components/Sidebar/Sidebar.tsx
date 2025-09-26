@@ -37,6 +37,15 @@ import {
 } from "react-icons/md";
 import { HiUpload, HiDocumentText } from "react-icons/hi";
 import { FaBrain, FaProjectDiagram } from "react-icons/fa";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/DropdownMenu/DropdownMenu";
 
 // TypeScript Type Definitions
 type IconComponent = React.ComponentType<{ className?: string }>;
@@ -144,22 +153,6 @@ interface TooltipProps {
   show: boolean;
 }
 
-interface TooltipProviderProps {
-  children: React.ReactNode;
-}
-
-interface TooltipContextType {
-  showTooltip: (content: string, x: number, y: number) => void;
-  hideTooltip: () => void;
-}
-
-interface TooltipState {
-  isVisible: boolean;
-  content: string;
-  x: number;
-  y: number;
-}
-
 interface SidebarContextType {
   isOpen: boolean;
   isMobile: boolean;
@@ -226,7 +219,7 @@ function Tooltip({ children, content, show }: TooltipProps): React.JSX.Element {
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const triggerRef = React.useRef<HTMLDivElement>(null);
 
-  const handleMouseEnter = (e: React.MouseEvent) => {
+  const handleMouseEnter = () => {
     if (!show || !content) return;
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -634,7 +627,7 @@ function TeamSwitcher({
   forceExpanded = false,
   showDropdown = true,
 }: TeamSwitcherProps): React.JSX.Element | null {
-  const { isMobile, isOpen } = useSidebarContext();
+  const { isOpen } = useSidebarContext();
   const [activeTeam, setActiveTeam] = React.useState(data.teams[0]);
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const shouldShowExpanded = forceExpanded || isOpen;
@@ -679,67 +672,64 @@ function TeamSwitcher({
 
   // Interactive team switcher with dropdown
   return (
-    <div className="relative">
-      <button
-        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className={`flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${
-          !shouldShowExpanded ? "justify-center" : ""
-        }`}
-        title={!shouldShowExpanded ? activeTeam.name : undefined}
-      >
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
-          <activeTeam.logo className="h-4 w-4" />
-        </div>
-        {shouldShowExpanded && (
-          <>
-            <div className="flex-1 min-w-0">
-              <div className="truncate text-sm font-medium">
-                {activeTeam.name}
-              </div>
-              <div className="truncate text-xs text-slate-500">
-                {activeTeam.plan}
-              </div>
-            </div>
-            <MdExpandMore className="h-4 w-4 text-slate-500" />
-          </>
-        )}
-      </button>
-
-      {isDropdownOpen && shouldShowExpanded && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50">
-          <div className="p-2">
-            <div className="text-xs font-medium text-slate-500 mb-2">Teams</div>
-            {data.teams.map((team, index) => (
-              <button
-                key={team.name}
-                onClick={() => {
-                  setActiveTeam(team);
-                  setIsDropdownOpen(false);
-                }}
-                className="flex w-full items-center gap-2 rounded-md p-2 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              >
-                <div className="flex h-6 w-6 items-center justify-center rounded-md border">
-                  <team.logo className="h-3.5 w-3.5" />
-                </div>
-                <span className="text-sm">{team.name}</span>
-                <span className="ml-auto text-xs text-slate-500">
-                  ⌘{index + 1}
-                </span>
-              </button>
-            ))}
-            <div className="border-t border-slate-200 dark:border-slate-700 my-2" />
-            <button className="flex w-full items-center gap-2 rounded-md p-2 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-              <div className="flex h-6 w-6 items-center justify-center rounded-md border">
-                <MdAdd className="h-4 w-4" />
-              </div>
-              <span className="text-sm font-medium text-slate-500">
-                Add team
-              </span>
-            </button>
+    <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+      <Tooltip content={activeTeam.name} show={!shouldShowExpanded}>
+        <DropdownMenuTrigger
+          className={`flex w-full items-center gap-3 rounded-lg p-1.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${
+            !shouldShowExpanded ? "justify-center" : ""
+          }`}
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
+            <activeTeam.logo className="h-4 w-4" />
           </div>
-        </div>
-      )}
-    </div>
+          {shouldShowExpanded && (
+            <>
+              <div className="flex-1 min-w-0">
+                <div className="truncate text-sm font-medium">
+                  {activeTeam.name}
+                </div>
+                <div className="truncate text-xs text-slate-500">
+                  {activeTeam.plan}
+                </div>
+              </div>
+              <MdExpandMore className="h-4 w-4 text-slate-500" />
+            </>
+          )}
+        </DropdownMenuTrigger>
+      </Tooltip>
+
+      <DropdownMenuContent align="start" className="w-64 max-w-[90vw]">
+        <DropdownMenuLabel className="text-xs font-medium text-slate-500">
+          Teams
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          {data.teams.map((team, index) => (
+            <div
+              key={team.name}
+              onClick={() => {
+                setActiveTeam(team);
+                setIsDropdownOpen(false);
+              }}
+              className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded-sm transition-colors"
+            >
+              <div className="flex h-6 w-6 items-center justify-center rounded-md border">
+                <team.logo className="h-3.5 w-3.5" />
+              </div>
+              <span className="text-sm flex-1">{team.name}</span>
+              <span className="text-xs text-slate-500">⌘{index + 1}</span>
+            </div>
+          ))}
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="flex items-center gap-2 p-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md border">
+            <MdAdd className="h-4 w-4" />
+          </div>
+          <span className="text-sm font-medium text-slate-500">Add team</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -949,15 +939,13 @@ function NavSection({
 
 // Nav User Component
 function NavUser({ forceExpanded = false }: NavUserProps): React.JSX.Element {
-  const { isMobile, isOpen } = useSidebarContext();
-  const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+  const { isOpen } = useSidebarContext();
   const shouldShowExpanded = forceExpanded || isOpen;
 
   return (
-    <div className="relative">
+    <DropdownMenu>
       <Tooltip content={data.user.name} show={!shouldShowExpanded}>
-        <button
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        <DropdownMenuTrigger
           className={`flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${
             !shouldShowExpanded ? "justify-center" : ""
           }`}
@@ -978,57 +966,52 @@ function NavUser({ forceExpanded = false }: NavUserProps): React.JSX.Element {
               <MdExpandMore className="h-4 w-4 text-slate-500" />
             </>
           )}
-        </button>
+        </DropdownMenuTrigger>
       </Tooltip>
 
-      {isDropdownOpen && shouldShowExpanded && (
-        <div className="absolute bottom-full left-0 right-0 mb-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50">
-          <div className="p-2">
-            <div className="flex items-center gap-2 px-1 py-1.5">
-              <div className="h-8 w-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                <MdPerson className="h-4 w-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="truncate text-sm font-medium">
-                  {data.user.name}
-                </div>
-                <div className="truncate text-xs text-slate-500">
-                  {data.user.email}
-                </div>
-              </div>
-            </div>
-            <div className="border-t border-slate-200 dark:border-slate-700 my-2" />
-
-            <button className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-              <MdAutoAwesome className="h-4 w-4" />
-              Upgrade to Pro
-            </button>
-
-            <div className="border-t border-slate-200 dark:border-slate-700 my-2" />
-
-            <button className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-              <MdVerified className="h-4 w-4" />
-              Account
-            </button>
-            <button className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-              <MdCreditCard className="h-4 w-4" />
-              Billing
-            </button>
-            <button className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-              <MdNotifications className="h-4 w-4" />
-              Notifications
-            </button>
-
-            <div className="border-t border-slate-200 dark:border-slate-700 my-2" />
-
-            <button className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-              <MdLogoutIcon className="h-4 w-4" />
-              Log out
-            </button>
+      <DropdownMenuContent align="end" className="w-64 max-w-[90vw]">
+        <DropdownMenuLabel className="flex items-center space-x-3 p-3">
+          <div className="w-12 h-12 bg-slate-300 dark:bg-slate-500 text-slate-800 dark:text-slate-100 rounded-full flex items-center justify-center text-primary-foreground text-lg font-medium">
+            {data.user.name.charAt(0).toUpperCase()}
           </div>
-        </div>
-      )}
-    </div>
+          <div>
+            <p className="font-medium text-slate-900 dark:text-slate-50">
+              {data.user.name}
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-300">
+              {data.user.email}
+            </p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem>
+            <MdAutoAwesome className="mr-2 h-4 w-4" />
+            Upgrade to Pro
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem>
+            <MdVerified className="mr-2 h-4 w-4" />
+            Account
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <MdCreditCard className="mr-2 h-4 w-4" />
+            Billing
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <MdNotifications className="mr-2 h-4 w-4" />
+            Notifications
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="text-destructive focus:text-destructive">
+          <MdLogoutIcon className="mr-2 h-4 w-4" />
+          Log out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
