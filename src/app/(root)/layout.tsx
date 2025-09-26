@@ -47,14 +47,14 @@ export default function CustomLayout({
   showTeamSwitcherDropdown?: boolean;
 }>) {
   return (
-      <SidebarProvider>
-        <div className="flex h-screen bg-slate-50 dark:bg-slate-900">
-          {/* Sidebar */}
-          <Sidebar showTeamSwitcherDropdown={showTeamSwitcherDropdown} />
+    <SidebarProvider>
+      <div className="flex h-screen bg-slate-50 dark:bg-slate-900">
+        {/* Sidebar */}
+        <Sidebar showTeamSwitcherDropdown={showTeamSwitcherDropdown} />
 
-          {/* Main Content Area */}
-          <MainContent>{children}</MainContent>
-        </div>
-      </SidebarProvider>
+        {/* Main Content Area */}
+        <MainContent>{children}</MainContent>
+      </div>
+    </SidebarProvider>
   );
 }

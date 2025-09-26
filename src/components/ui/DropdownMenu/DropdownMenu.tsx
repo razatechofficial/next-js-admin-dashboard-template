@@ -479,7 +479,7 @@ const DropdownMenuContent = React.forwardRef<
       <div
         ref={combinedRef}
         className={cn(
-          "fixed z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-1 text-gray-900 dark:text-gray-100 shadow-md",
+          "fixed z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 p-1 text-gray-900 dark:text-gray-100 shadow-md",
           "transition-all duration-200 ease-in-out",
           className
         )}
@@ -543,7 +543,7 @@ const DropdownMenuItem = React.forwardRef<
           "text-gray-900 dark:text-gray-100",
           "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100",
           "focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-gray-800 dark:focus:text-gray-100",
-          "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+          "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
           variant === "destructive" &&
             "text-red-600 dark:text-red-400 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20 dark:hover:text-red-400 focus:bg-red-50 focus:text-red-700 dark:focus:bg-red-900/20 dark:focus:text-red-400",
           inset && "pl-8",
@@ -608,7 +608,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
           "text-gray-900 dark:text-gray-100",
           "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100",
           "focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-gray-800 dark:focus:text-gray-100",
-          "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+          "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
           disabled && "pointer-events-none opacity-50",
           className
         )}
@@ -689,7 +689,7 @@ const DropdownMenuRadioItem = React.forwardRef<
           "text-gray-900 dark:text-gray-100",
           "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100",
           "focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-gray-800 dark:focus:text-gray-100",
-          "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+          "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
           disabled && "pointer-events-none opacity-50",
           className
         )}
@@ -879,7 +879,7 @@ const DropdownMenuSubContent = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-1 text-gray-900 dark:text-gray-100 shadow-lg",
+          "z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 p-1 text-gray-900 dark:text-gray-100 shadow-lg",
           "transition-all duration-200 ease-in-out",
           className
         )}
