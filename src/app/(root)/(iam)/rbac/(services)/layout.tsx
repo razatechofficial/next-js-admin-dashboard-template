@@ -1,10 +1,10 @@
 "use client";
 import { Suspense } from "react";
-import TabLink from "@/components/layout/Tab/TabLink";
+import TabLink from "@/components/ui/Tab/TabLink";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { useAuth } from "@/hooks/useAuth";
-import ContentLoading from "@/components/layout/Loading/ContentLoading";
+import ContentLoading from "@/components/ui/Loading/ContentLoading";
 
 export default function RbacServicesLayout({
   children,

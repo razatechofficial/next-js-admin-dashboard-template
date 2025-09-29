@@ -1,10 +1,10 @@
 "use client";
-import Modal from "@/components/layout/Modal/Modal";
+import Modal from "@/components/ui/Modal/Modal";
 import {
   DataTable,
   BaseTableData,
   ColumnDefinition,
-} from "@/components/layout/Table/DataTable";
+} from "@/components/ui/Table/DataTable";
 import React, { useState } from "react";
 import AddAppService from "./_Forms/AddAppService";
 
