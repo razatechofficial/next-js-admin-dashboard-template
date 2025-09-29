@@ -34,6 +34,7 @@ import {
   MdEdit,
   MdFlashOn,
   MdHelpOutline,
+  MdLock,
 } from "react-icons/md";
 import { HiUpload, HiDocumentText } from "react-icons/hi";
 import { FaBrain, FaProjectDiagram } from "react-icons/fa";
@@ -199,6 +200,7 @@ const IconMap: Record<string, IconComponent> = {
   CreditCard: MdCreditCard,
   LogOut: MdLogoutIcon,
   User: MdPerson,
+  Lock: MdLock,
 
   // UI icons
   ChevronLeft: MdChevronLeft,
@@ -424,6 +426,22 @@ const data: SidebarData = {
           name: "Ecommerce Store",
           url: "/ecommerce-store",
           icon: "Store",
+        },
+      ],
+    },
+    {
+      heading: "Administration",
+      showHeading: true,
+      items: [
+        {
+          name: "Users",
+          url: "/users",
+          icon: "Users",
+        },
+        {
+          name: "Roles and Permissions",
+          url: "/rbac/roles",
+          icon: "Lock",
         },
       ],
     },

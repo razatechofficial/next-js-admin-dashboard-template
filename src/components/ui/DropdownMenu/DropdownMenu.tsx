@@ -880,7 +880,7 @@ const DropdownMenuSubContent = React.forwardRef<
         ref={ref}
         className={cn(
           "z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 p-1 text-gray-900 dark:text-gray-100 shadow-lg",
-          "transition-all duration-200 ease-in-out",
+          "transition-all duration-300 ease-in-out",
           className
         )}
         {...props}
