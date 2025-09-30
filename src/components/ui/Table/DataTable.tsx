@@ -7,13 +7,15 @@ import React, {
   useImperativeHandle,
 } from "react";
 import {
-  BiChevronLeft,
-  BiChevronRight,
   BiDownload,
   BiEdit,
   BiPlus,
   BiRefresh,
   BiSearch,
+  BiSolidChevronLeft,
+  BiSolidChevronRight,
+  BiSolidChevronsLeft,
+  BiSolidChevronsRight,
   BiTrash,
 } from "react-icons/bi";
 
@@ -73,19 +75,9 @@ export type DataTableParams = {
   sortOrder: "ASC" | "DESC";
 };
 
-// export const DataTable = forwardRef(
-//   function DataTable<T extends BaseTableData>(
-//     {
-
-// export const DataTable = forwardRef<DataTableRef, DataTableProps<any>>(
-//   function DataTable<T extends BaseTableData>(
-//     {
-
 export const DataTable = forwardRef(
   <T extends BaseTableData>(
     {
-      // export const DataTable = forwardRef(function DataTable<T extends BaseTableData>(
-      //   {
       columns,
       fetchData,
       onRowClick,
@@ -209,27 +201,6 @@ export const DataTable = forwardRef(
 
     return (
       <div className="w-full">
-        {/* Header Section */}
-        {/* <div className="px-2 py-2 md:py-4 bg-slate-300 dark:bg-gray-700">
-        <div className="sm:flex items-center justify-between">
-          <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold leading-normal text-gray-800 dark:text-gray-200">
-            {tableTitle}
-          </p>
-
-          {addNewButton && (
-            <div>
-              <button
-                onClick={addNewButton.onClick}
-                className="inline-flex sm:ml-3 mt-4 sm:mt-0 items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 focus:outline-none rounded-md"
-              >
-                <BiPlus className="mr-2 w-4 h-4 text-slate-100" />
-                <span className="text-white">{addNewButton.label}</span>
-              </button>
-            </div>
-          )}
-        </div>
-      </div> */}
-
         <div className="px-4 py-2 md:py-4 bg-slate-300 dark:bg-gray-700">
           <div className="sm:flex sm:flex-wrap items-center justify-between gap-4">
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold leading-normal text-gray-800 dark:text-gray-200">
@@ -352,7 +323,7 @@ export const DataTable = forwardRef(
 
         {/* Table Section */}
         <div className="overflow-x-auto hide-scroll-bar">
-          <div className="max-h-[30rem] min-h-[18rem] overflow-y-auto hide-scroll-bar">
+          <div className="max-h-[45rem] min-h-[18rem] overflow-y-auto hide-scroll-bar">
             <table className="min-w-full table-auto">
               <thead className="sticky top-0 bg-gray-200 dark:bg-slate-700 z-10 shadow-md">
                 <tr>
@@ -456,78 +427,181 @@ export const DataTable = forwardRef(
 
         {/* Pagination Section */}
         {enablePagination && (
-          <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 px-4 py-2">
-            <div className="text-sm">
+          <div className=" bg-gray-100 dark:bg-gray-700 sm:px-4 py-2">
+            {/* <div className="text-sm">
               <p>{range}</p>
+            </div> */}
+
+            {/* Mobile Layout */}
+            <div className="flex flex-col space-y-3 sm:hidden">
+              <div className="text-sm text-center">
+                <p className="text-gray-700 dark:text-gray-300">{range}</p>
+              </div>
+              <div className="flex items-center justify-center space-x-2">
+                <button
+                  onClick={() => setPage(1)}
+                  disabled={page === 1}
+                  className="px-2 py-1 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  <BiSolidChevronsLeft />
+                </button>
+                <button
+                  onClick={() => setPage(page > 1 ? page - 1 : 1)}
+                  disabled={page === 1}
+                  className="px-2 py-1 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  <BiSolidChevronLeft />
+                </button>
+
+                {/* Mobile: Show only current page and total */}
+                <div className="flex items-center space-x-1">
+                  <span className="px-2 py-1 text-sm text-gray-600 dark:text-gray-400">
+                    Page {page} of {totalPages}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() =>
+                    setPage(page < totalPages ? page + 1 : totalPages)
+                  }
+                  disabled={page === totalPages}
+                  className="px-2 py-1 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  <BiSolidChevronRight />
+                </button>
+                <button
+                  onClick={() => setPage(totalPages)}
+                  disabled={page === totalPages}
+                  className="px-2 py-1 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  <BiSolidChevronsRight />
+                </button>
+              </div>
             </div>
 
-            <div className="flex items-center space-x-1">
-              <button
-                onClick={() => setPage(1)}
-                disabled={page === 1}
-                className="px-1 py-1 bg-blue-500 text-white rounded disabled:bg-gray-300"
-              >
-                <BiChevronLeft />
-              </button>
-              <button
-                onClick={() => setPage(page > 1 ? page - 1 : 1)}
-                disabled={page === 1}
-                className="px-1 py-1 bg-blue-500 text-white rounded disabled:bg-gray-300"
-              >
-                <BiChevronLeft />
-              </button>
+            {/* Desktop Layout */}
+            <div className="hidden sm:flex items-center justify-between">
+              <div className="text-sm">
+                <p className="text-gray-700 dark:text-gray-300">{range}</p>
+              </div>
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => setPage(1)}
+                  disabled={page === 1}
+                  className="px-2 py-1 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
+                  title="First page"
+                >
+                  <BiSolidChevronsLeft />
+                </button>
+                <button
+                  onClick={() => setPage(page > 1 ? page - 1 : 1)}
+                  disabled={page === 1}
+                  className="px-2 py-1 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
+                  title="Previous page"
+                >
+                  <BiSolidChevronLeft />
+                </button>
+                {/* Improved pagination number rendering logic */}
+                {(() => {
+                  const maxVisiblePages = 7; // Maximum number of page buttons to show
+                  const pages = [];
 
-              {/* Pagination number rendering logic */}
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter((p) => {
-                  if (p === 1 || p === totalPages) return true;
-                  if (Math.abs(p - page) <= 2) return true;
-                  return false;
-                })
-                .map((p, index, array) => {
-                  const isDots =
-                    index > 0 &&
-                    index < array.length - 1 &&
-                    Math.abs(array[index - 1] - p) > 1;
+                  if (totalPages <= maxVisiblePages) {
+                    // Show all pages if total is small
+                    for (let i = 1; i <= totalPages; i++) {
+                      pages.push(i);
+                    }
+                  } else {
+                    // Smart pagination for large page counts
+                    const showEllipsis = totalPages > maxVisiblePages;
 
-                  return isDots ? (
-                    <span
-                      key={`dots-${index}`}
-                      className="px-2 py-1 text-gray-600 dark:text-gray-400 text-center"
-                    >
-                      ...
-                    </span>
-                  ) : (
-                    <button
-                      key={p}
-                      onClick={() => setPage(p)}
-                      className={`px-2 py-1 rounded ${
-                        p === page
-                          ? "bg-blue-700 text-white"
-                          : "bg-gray-300 text-gray-800 hover:bg-blue-500 hover:text-white"
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  );
-                })}
+                    // Always show first page
+                    pages.push(1);
 
-              <button
-                onClick={() =>
-                  setPage(page < totalPages ? page + 1 : totalPages)
-                }
-                disabled={page === totalPages}
-                className="px-1 py-1 bg-blue-500 text-white rounded disabled:bg-gray-300"
-              >
-                <BiChevronRight />
-              </button>
-              <button
-                onClick={() => setPage(totalPages)}
-                disabled={page === totalPages}
-                className="px-1 py-1 bg-blue-500 text-white rounded disabled:bg-gray-300"
-              >
-                <BiChevronRight />
-              </button>
+                    if (page <= 4) {
+                      // Show pages 1-5, ellipsis, last page
+                      for (let i = 2; i <= Math.min(5, totalPages - 1); i++) {
+                        pages.push(i);
+                      }
+                      if (showEllipsis && totalPages > 6) {
+                        pages.push("ellipsis-start");
+                      }
+                    } else if (page >= totalPages - 3) {
+                      // Show first page, ellipsis, last 5 pages
+                      if (showEllipsis && totalPages > 6) {
+                        pages.push("ellipsis-end");
+                      }
+                      for (
+                        let i = Math.max(totalPages - 4, 2);
+                        i <= totalPages - 1;
+                        i++
+                      ) {
+                        pages.push(i);
+                      }
+                    } else {
+                      // Show first page, ellipsis, current-1, current, current+1, ellipsis, last page
+                      if (showEllipsis) {
+                        pages.push("ellipsis-start");
+                      }
+                      for (let i = page - 1; i <= page + 1; i++) {
+                        pages.push(i);
+                      }
+                      if (showEllipsis) {
+                        pages.push("ellipsis-end");
+                      }
+                    }
+
+                    // Always show last page if it's not already included
+                    if (totalPages > 1) {
+                      pages.push(totalPages);
+                    }
+                  }
+                  return pages.map((p, index) => {
+                    if (p === "ellipsis-start" || p === "ellipsis-end") {
+                      return (
+                        <span
+                          key={`ellipsis-${index}`}
+                          className="px-2 py-1 text-gray-600 dark:text-gray-400 text-center"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => setPage(p as number)}
+                        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                          p === page
+                            ? "bg-blue-700 text-white"
+                            : "bg-gray-300 text-gray-800 hover:bg-blue-500 hover:text-white dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-blue-500"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    );
+                  });
+                })()}
+                <button
+                  onClick={() =>
+                    setPage(page < totalPages ? page + 1 : totalPages)
+                  }
+                  disabled={page === totalPages}
+                  className="px-2 py-1 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
+                  title="Next page"
+                >
+                  <BiSolidChevronRight />
+                </button>
+                <button
+                  onClick={() => setPage(totalPages)}
+                  disabled={page === totalPages}
+                  className="px-2 py-1 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
+                  title="Last page"
+                >
+                  <BiSolidChevronsRight />
+                </button>
+              </div>
             </div>
           </div>
         )}

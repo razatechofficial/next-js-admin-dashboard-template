@@ -86,7 +86,7 @@ const Users = () => {
                 </span>
               )}
             </div>
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-200">
+            <span className="text-sm text-nowrap font-medium text-gray-900 dark:text-gray-200">
               {row?.name || "Name not available"}
             </span>
           </div>
