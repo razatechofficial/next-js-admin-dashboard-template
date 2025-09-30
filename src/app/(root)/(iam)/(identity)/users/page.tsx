@@ -4,14 +4,13 @@ import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import Modal from "@/components/ui/Modal/Modal";
 import AddUser from "./_Forms/AddUser";
-import Image from "next/image";
+import Avatar from "@/components/ui/Avatar/Avatar";
 
 // TypeScript types
 import type {
   BaseTableData,
   ColumnDefinition,
 } from "@/components/ui/Table/DataTable";
-import { getInitialsFromName } from "@/utils/NameLetterSeperator";
 import { useRBAC } from "@/hooks/rbacNewO1";
 import ContentLoading from "@/components/ui/Loading/ContentLoading";
 import ContentUnAuthorized from "@/components/ui/UnAuthorized/ContentUnAuthorized";
@@ -66,26 +65,13 @@ const Users = () => {
       renderCell(row) {
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full border-2 border-primary bg-slate-200 dark:bg-gray-600 flex items-center justify-center">
-              {row?.profile_image ? (
-                <Image
-                  alt={`${row.name}'s profile`}
-                  height={48}
-                  width={48}
-                  src={row.profile_image}
-                  unoptimized
-                  loader={({ src }) => src}
-                  referrerPolicy="no-referrer"
-                  crossOrigin="anonymous"
-                  className="overflow-hidden object-cover rounded-full"
-                />
-              ) : (
-                <span className="font-medium text-lg">
-                  {/* {row?.name ? row.name.charAt(0).toUpperCase() : "?"} */}
-                  {getInitialsFromName(row?.name)}
-                </span>
-              )}
-            </div>
+            <Avatar
+              src={row?.profile_image}
+              alt={`${row.name}'s profile`}
+              name={row?.name}
+              size="md"
+              className="flex-shrink-0"
+            />
             <span className="text-sm text-nowrap font-medium text-gray-900 dark:text-gray-200">
               {row?.name || "Name not available"}
             </span>
