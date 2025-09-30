@@ -201,7 +201,7 @@ export const DataTable = forwardRef(
 
     return (
       <div className="w-full">
-        <div className="px-4 py-2 md:py-4 bg-slate-300 dark:bg-gray-700">
+        <div className="px-4 py-2 md:py-4 bg-slate-100 dark:bg-slate-800">
           <div className="sm:flex sm:flex-wrap items-center justify-between gap-4">
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold leading-normal text-gray-800 dark:text-gray-200">
               {tableTitle}
