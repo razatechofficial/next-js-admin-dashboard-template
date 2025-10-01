@@ -25,7 +25,7 @@ export const FloatingSelect = forwardRef<
         {...props}
         ref={ref}
         className={`
-            peer w-full px-4 py-3 border rounded-sm outline-none transition-all
+            peer w-full px-4 py-[0.95rem] border rounded-sm outline-none transition-all
             appearance-none
             ${
               error
@@ -50,7 +50,7 @@ export const FloatingSelect = forwardRef<
       <label
         className={`
             absolute left-4 -top-2.5 px-1 text-sm transition-all
-            peer-placeholder-shown:text-base peer-placeholder-shown:top-3
+            peer-placeholder-shown:text-base peer-placeholder-shown:top-[0.95rem]
             peer-focus:-top-2.5 peer-focus:text-sm
             ${error ? "text-red-500" : "text-gray-600 dark:text-gray-200"}
             ${props.disabled ? "text-slate-400 dark:text-slate-400" : ""}
@@ -62,7 +62,7 @@ export const FloatingSelect = forwardRef<
       {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
       {/* For single line error top-1/3 */}
       <div
-        className={`absolute right-4  -translate-y-1/2 pointer-events-none ${
+        className={`absolute right-4 -translate-y-1/2 pointer-events-none ${
           error ? "top-[1.56rem]" : "top-1/2"
         }`}
       >
