@@ -38,6 +38,7 @@ export const FloatingSelect = forwardRef<
                 ? "bg-slate-50 dark:bg-slate-600 cursor-not-allowed"
                 : "bg-white dark:bg-gray-800"
             }
+            text-slate-900 dark:text-slate-200
           `}
       >
         <option value="">Select {label}</option>
