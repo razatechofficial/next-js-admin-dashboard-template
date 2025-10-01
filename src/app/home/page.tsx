@@ -1,22 +1,24 @@
 import React from "react";
-import Hero from "./_components/Hero/Hero";
-import Features from "./_components/Features/Features";
-import About from "./_components/About/About";
-import Services from "./_components/Services/Services";
-import Testimonials from "./_components/Testimonials/Testimonials";
-import Contact from "./_components/Contact/Contact";
-import Footer from "./_components/Footer/Footer";
+import OptimizedNavbar from "./_components/OptimizedNavbar/OptimizedNavbar";
+import TypographyHero from "./_components/TypographyHero/TypographyHero";
+import PKIFeatures from "./_components/PKIFeatures/PKIFeatures";
+import Pricing from "./_components/Pricing/Pricing";
+import SoftwareUseCases from "./_components/SoftwareUseCases/SoftwareUseCases";
+import MarqueeTestimonials from "./_components/MarqueeTestimonials/MarqueeTestimonials";
+import PKIContact from "./_components/PKIContact/PKIContact";
+import PKIFooter from "./_components/PKIFooter/PKIFooter";
 
 const Home = () => {
   return (
     <div className="min-h-screen">
-      <Hero />
-      <Features />
-      <About />
-      <Services />
-      <Testimonials />
-      <Contact />
-      <Footer />
+      <OptimizedNavbar />
+      <TypographyHero />
+      <PKIFeatures />
+      <Pricing />
+      <SoftwareUseCases />
+      <MarqueeTestimonials />
+      <PKIContact />
+      <PKIFooter />
     </div>
   );
 };
