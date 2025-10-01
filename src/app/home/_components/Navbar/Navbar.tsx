@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Button from "@/components/ui/Button/Button";
@@ -100,12 +101,12 @@ const Navbar = () => {
 
           {/* CTA Buttons */}
           <div className="hidden lg:flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+            <Link
+              href="/login"
+              className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors duration-300 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               Login
-            </Button>
+            </Link>
             <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white">
               Start Free Trial
             </Button>
@@ -156,13 +157,13 @@ const Navbar = () => {
                 </a>
               ))}
               <div className="flex flex-col space-y-2 pt-4">
-                <Button
-                  variant="ghost"
-                  className="justify-start text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                <Link
+                  href="/login"
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors duration-300 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 w-full text-left"
                 >
-                  Login
-                </Button>
-                <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white">
+                  Login 2
+                </Link>
+                <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white w-full">
                   Start Free Trial
                 </Button>
               </div>

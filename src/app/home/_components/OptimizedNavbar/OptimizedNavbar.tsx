@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Button from "@/components/ui/Button/Button";
@@ -121,16 +122,16 @@ const OptimizedNavbar = () => {
 
           {/* CTA Buttons */}
           <div className="hidden lg:flex items-center space-x-3 xl:space-x-4">
-            <Button
-              variant="ghost"
-              className={`text-sm xl:text-base transition-colors duration-300 ${
+            <Link
+              href="/login"
+              className={`text-sm xl:text-base transition-colors duration-300 px-4 xl:px-6 py-2 xl:py-3 rounded-lg ${
                 isScrolled
-                  ? "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                  ? "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                   : "text-white/90 hover:text-white hover:bg-white/10"
               }`}
             >
               Login
-            </Button>
+            </Link>
             <Button
               className={`text-sm xl:text-base px-4 xl:px-6 py-2 xl:py-3 transition-all duration-300 ${
                 isScrolled
@@ -191,13 +192,13 @@ const OptimizedNavbar = () => {
                 </a>
               ))}
               <div className="flex flex-col space-y-3 pt-4">
-                <Button
-                  variant="ghost"
-                  className="justify-start text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 text-base"
+                <Link
+                  href="/login"
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors duration-300 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 w-full text-left text-base"
                 >
                   Login
-                </Button>
-                <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white text-base">
+                </Link>
+                <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white text-base w-full">
                   Start Free Trial
                 </Button>
               </div>
