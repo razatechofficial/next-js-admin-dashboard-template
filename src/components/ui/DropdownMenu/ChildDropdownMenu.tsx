@@ -23,30 +23,31 @@ interface DropdownWithCustomTriggerProps {
   alignOffset?: number;
 }
 
-export const DropdownWithCustomTrigger: React.FC<
-  DropdownWithCustomTriggerProps
-> = ({
-  trigger,
-  children,
-  align = "center",
-  side = "bottom",
-  sideOffset = 4,
-  alignOffset = 0,
-}) => {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-      <DropdownMenuContent
-        align={align}
-        side={side}
-        sideOffset={sideOffset}
-        alignOffset={alignOffset}
-      >
-        {children}
-      </DropdownMenuContent>
-    </DropdownMenu>
+export const DropdownWithCustomTrigger: React.FC<DropdownWithCustomTriggerProps> =
+  React.memo(
+    ({
+      trigger,
+      children,
+      align = "center",
+      side = "bottom",
+      sideOffset = 4,
+      alignOffset = 0,
+    }) => {
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
+          <DropdownMenuContent
+            align={align}
+            side={side}
+            sideOffset={sideOffset}
+            alignOffset={alignOffset}
+          >
+            {children}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
   );
-};
 
 // Export all components for convenience
 export {

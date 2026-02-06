@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/utils/tw";
+import { gsap } from "gsap";
 
 // Types
 interface DropdownMenuContextType {
@@ -59,46 +60,54 @@ function DropdownMenu({
     [isControlled, onOpenChange]
   );
 
-  // Close dropdown when clicking outside
+  // Optimized click outside and escape key handlers with passive listeners
   React.useEffect(() => {
+    if (!currentOpen) return;
+
+    // Memoized handler to prevent recreation on every render
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      // Use early returns for better performance
+      if (!contentRef.current || !triggerRef.current) return;
       if (
-        currentOpen &&
-        contentRef.current &&
-        triggerRef.current &&
-        !contentRef.current.contains(event.target as Node) &&
-        !triggerRef.current.contains(event.target as Node)
-      ) {
-        handleSetIsOpen(false);
-      }
+        contentRef.current.contains(target) ||
+        triggerRef.current.contains(target)
+      )
+        return;
+
+      handleSetIsOpen(false);
     };
 
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && currentOpen) {
+      if (event.key === "Escape") {
+        event.preventDefault();
         handleSetIsOpen(false);
       }
     };
 
-    if (currentOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("keydown", handleEscape);
-    }
+    // Use capture phase for better performance and reliability
+    document.addEventListener("mousedown", handleClickOutside, true);
+    document.addEventListener("keydown", handleEscape, { passive: false });
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside, true);
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [currentOpen, handleSetIsOpen]);
+  }, [currentOpen, handleSetIsOpen, contentRef, triggerRef]);
+
+  // Memoize context value to prevent unnecessary re-renders (React 19 optimization)
+  const contextValue = React.useMemo(
+    () => ({
+      isOpen: currentOpen,
+      setIsOpen: handleSetIsOpen,
+      triggerRef,
+      contentRef,
+    }),
+    [currentOpen, handleSetIsOpen, triggerRef, contentRef]
+  );
 
   return (
-    <DropdownMenuContext.Provider
-      value={{
-        isOpen: currentOpen,
-        setIsOpen: handleSetIsOpen,
-        triggerRef,
-        contentRef,
-      }}
-    >
+    <DropdownMenuContext.Provider value={contextValue}>
       <div className="relative block" dir={dir}>
         {children}
       </div>
@@ -218,6 +227,7 @@ const DropdownMenuContent = React.forwardRef<
     });
     const [isPositioned, setIsPositioned] = React.useState<boolean>(false);
     const [actualSide, setActualSide] = React.useState<Side>(side);
+    const animationRef = React.useRef<gsap.core.Tween | null>(null);
 
     // Combine forwarded ref with internal ref
     const combinedRef = React.useCallback(
@@ -232,246 +242,209 @@ const DropdownMenuContent = React.forwardRef<
       [ref, contentRef]
     );
 
-    // Calculate position immediately when opening
-    React.useEffect(() => {
-      if (isOpen && triggerRef.current) {
-        // Use requestAnimationFrame to ensure DOM is ready
-        const calculatePosition = (): void => {
-          const triggerElement = triggerRef.current;
-          if (!triggerElement) return;
-
+    // Memoized position calculator to prevent unnecessary recalculations (React 19 optimization)
+    const calculateOptimalPosition = React.useMemo(
+      () =>
+        (
+          triggerElement: HTMLElement,
+          contentElement: HTMLElement | null
+        ): { side: Side; top: number; left: number } => {
           const triggerRect = triggerElement.getBoundingClientRect();
           const viewportWidth = window.innerWidth;
           const viewportHeight = window.innerHeight;
 
-          // Estimate content dimensions (we'll refine after render)
-          const estimatedWidth = 200; // Default width
-          const estimatedHeight = 100; // Default height
+          // Use actual dimensions if available, otherwise estimate
+          const contentWidth = contentElement?.offsetWidth || 200;
+          const contentHeight = contentElement?.offsetHeight || 100;
 
-          // Auto-positioning logic
-          const getBestPosition = (
-            preferredSide: Side
-          ): { side: Side; top: number; left: number } => {
-            const space = {
-              top: triggerRect.top - estimatedHeight - sideOffset,
-              bottom: triggerRect.bottom + sideOffset,
-              left: triggerRect.left - estimatedWidth - sideOffset,
-              right: triggerRect.right + sideOffset,
-            };
-
-            const fits = {
-              top: space.top >= 8,
-              bottom: space.bottom + estimatedHeight <= viewportHeight - 8,
-              left: space.left >= 8,
-              right: space.right + estimatedWidth <= viewportWidth - 8,
-            };
-
-            // Try preferred side first
-            if (preferredSide === "bottom" && fits.bottom) {
-              return { side: "bottom", top: space.bottom, left: 0 };
-            }
-            if (preferredSide === "top" && fits.top) {
-              return { side: "top", top: space.top, left: 0 };
-            }
-            if (preferredSide === "right" && fits.right) {
-              return { side: "right", top: 0, left: space.right };
-            }
-            if (preferredSide === "left" && fits.left) {
-              return { side: "left", top: 0, left: space.left };
-            }
-
-            // Auto-select best available position
-            if (fits.bottom)
-              return { side: "bottom", top: space.bottom, left: 0 };
-            if (fits.top) return { side: "top", top: space.top, left: 0 };
-            if (fits.right) return { side: "right", top: 0, left: space.right };
-            if (fits.left) return { side: "left", top: 0, left: space.left };
-
-            // Fallback to bottom with viewport constraints
-            return { side: "bottom", top: space.bottom, left: 0 };
+          // Calculate available space on each side
+          const space = {
+            top: triggerRect.top - contentHeight - sideOffset,
+            bottom: triggerRect.bottom + sideOffset,
+            left: triggerRect.left - contentWidth - sideOffset,
+            right: triggerRect.right + sideOffset,
           };
 
-          const {
-            side: calculatedSide,
-            top: baseTop,
-            left: baseLeft,
-          } = getBestPosition(side);
-          setActualSide(calculatedSide);
+          // Check which sides have enough space
+          const fits = {
+            top: space.top >= 8,
+            bottom: space.bottom + contentHeight <= viewportHeight - 8,
+            left: space.left >= 8,
+            right: space.right + contentWidth <= viewportWidth - 8,
+          };
+
+          // Determine best side
+          let calculatedSide = side;
+          let baseTop = 0;
+          let baseLeft = 0;
+
+          // Try preferred side first, then fallback to best available
+          if (side === "bottom" && fits.bottom) {
+            calculatedSide = "bottom";
+            baseTop = space.bottom;
+          } else if (side === "top" && fits.top) {
+            calculatedSide = "top";
+            baseTop = space.top;
+          } else if (side === "right" && fits.right) {
+            calculatedSide = "right";
+            baseLeft = space.right;
+          } else if (side === "left" && fits.left) {
+            calculatedSide = "left";
+            baseLeft = space.left;
+          } else if (fits.bottom) {
+            calculatedSide = "bottom";
+            baseTop = space.bottom;
+          } else if (fits.top) {
+            calculatedSide = "top";
+            baseTop = space.top;
+          } else if (fits.right) {
+            calculatedSide = "right";
+            baseLeft = space.right;
+          } else if (fits.left) {
+            calculatedSide = "left";
+            baseLeft = space.left;
+          } else {
+            // Fallback to bottom
+            calculatedSide = "bottom";
+            baseTop = space.bottom;
+          }
 
           let top = baseTop;
           let left = baseLeft;
 
-          // Calculate alignment based on actual side
-          switch (align) {
-            case "start":
-              if (calculatedSide === "bottom" || calculatedSide === "top") {
+          // Apply alignment
+          if (calculatedSide === "bottom" || calculatedSide === "top") {
+            switch (align) {
+              case "start":
                 left = triggerRect.left + alignOffset;
-              } else {
-                top = triggerRect.top + alignOffset;
-              }
-              break;
-            case "center":
-              if (calculatedSide === "bottom" || calculatedSide === "top") {
+                break;
+              case "center":
                 left =
                   triggerRect.left +
-                  (triggerRect.width - estimatedWidth) / 2 +
+                  triggerRect.width / 2 -
+                  contentWidth / 2 +
                   alignOffset;
-              } else {
+                break;
+              case "end":
+                left = triggerRect.right - contentWidth + alignOffset;
+                break;
+            }
+          } else {
+            switch (align) {
+              case "start":
+                top = triggerRect.top + alignOffset;
+                break;
+              case "center":
                 top =
                   triggerRect.top +
-                  (triggerRect.height - estimatedHeight) / 2 +
+                  triggerRect.height / 2 -
+                  contentHeight / 2 +
                   alignOffset;
-              }
-              break;
-            case "end":
-              if (calculatedSide === "bottom" || calculatedSide === "top") {
-                left = triggerRect.right - estimatedWidth + alignOffset;
-              } else {
-                top = triggerRect.bottom - estimatedHeight + alignOffset;
-              }
-              break;
+                break;
+              case "end":
+                top = triggerRect.bottom - contentHeight + alignOffset;
+                break;
+            }
           }
 
-          // Ensure content stays within viewport
-          if (left < 0) left = 8;
-          if (left + estimatedWidth > viewportWidth)
-            left = viewportWidth - estimatedWidth - 8;
-          if (top < 0) top = 8;
-          if (top + estimatedHeight > viewportHeight)
-            top = viewportHeight - estimatedHeight - 8;
+          // Constrain to viewport with padding
+          left = Math.max(8, Math.min(left, viewportWidth - contentWidth - 8));
+          top = Math.max(8, Math.min(top, viewportHeight - contentHeight - 8));
 
-          setPosition({ top, left });
-          setIsPositioned(true);
-        };
+          return { side: calculatedSide, top, left };
+        },
+      [side, align, sideOffset, alignOffset]
+    );
 
-        requestAnimationFrame(calculatePosition);
-      } else {
+    // Unified position calculation and animation effect
+    React.useEffect(() => {
+      if (!isOpen) {
+        // Cleanup animation on close
+        if (animationRef.current) {
+          animationRef.current.kill();
+          animationRef.current = null;
+        }
         setIsPositioned(false);
+        return;
       }
-    }, [isOpen, side, align, sideOffset, alignOffset, triggerRef]);
 
-    // Refine position after content is rendered
-    React.useEffect(() => {
-      if (isOpen && isPositioned && contentRef.current && triggerRef.current) {
-        const refinePosition = (): void => {
-          const contentElement = contentRef.current;
-          const triggerElement = triggerRef.current;
-          if (!contentElement || !triggerElement) return;
+      if (!triggerRef.current) return;
 
-          const triggerRect = triggerElement.getBoundingClientRect();
-          const contentRect = contentElement.getBoundingClientRect();
-          const viewportWidth = window.innerWidth;
-          const viewportHeight = window.innerHeight;
+      // Single RAF for position calculation
+      const rafId = requestAnimationFrame(() => {
+        const triggerElement = triggerRef.current;
+        const contentElement = contentRef.current;
+        if (!triggerElement) return;
 
-          // Auto-positioning logic with actual dimensions
-          const getBestPosition = (
-            preferredSide: Side
-          ): { side: Side; top: number; left: number } => {
-            const space = {
-              top: triggerRect.top - contentRect.height - sideOffset,
-              bottom: triggerRect.bottom + sideOffset,
-              left: triggerRect.left - contentRect.width - sideOffset,
-              right: triggerRect.right + sideOffset,
-            };
+        const {
+          side: calculatedSide,
+          top,
+          left,
+        } = calculateOptimalPosition(triggerElement, contentElement);
 
-            const fits = {
-              top: space.top >= 8,
-              bottom: space.bottom + contentRect.height <= viewportHeight - 8,
-              left: space.left >= 8,
-              right: space.right + contentRect.width <= viewportWidth - 8,
-            };
+        setActualSide(calculatedSide);
+        setPosition({ top, left });
 
-            // Try preferred side first
-            if (preferredSide === "bottom" && fits.bottom) {
-              return { side: "bottom", top: space.bottom, left: 0 };
-            }
-            if (preferredSide === "top" && fits.top) {
-              return { side: "top", top: space.top, left: 0 };
-            }
-            if (preferredSide === "right" && fits.right) {
-              return { side: "right", top: 0, left: space.right };
-            }
-            if (preferredSide === "left" && fits.left) {
-              return { side: "left", top: 0, left: space.left };
-            }
+        // Smooth animation with GSAP after position is set
+        if (contentElement && !isPositioned) {
+          // Initial state: invisible and slightly offset
+          gsap.set(contentElement, {
+            opacity: 0,
+            y:
+              calculatedSide === "top"
+                ? 4
+                : calculatedSide === "bottom"
+                ? -4
+                : 0,
+            x:
+              calculatedSide === "left"
+                ? 4
+                : calculatedSide === "right"
+                ? -4
+                : 0,
+          });
 
-            // Auto-select best available position
-            if (fits.bottom)
-              return { side: "bottom", top: space.bottom, left: 0 };
-            if (fits.top) return { side: "top", top: space.top, left: 0 };
-            if (fits.right) return { side: "right", top: 0, left: space.right };
-            if (fits.left) return { side: "left", top: 0, left: space.left };
+          // Animate to visible state
+          animationRef.current = gsap.to(contentElement, {
+            opacity: 1,
+            y: 0,
+            x: 0,
+            duration: 0.15,
+            ease: "power2.out",
+            onComplete: () => {
+              setIsPositioned(true);
+            },
+          });
+        } else if (contentElement && isPositioned) {
+          // Update position smoothly if already visible
+          gsap.to(contentElement, {
+            duration: 0.1,
+            ease: "power1.out",
+          });
+        } else {
+          setIsPositioned(true);
+        }
+      });
 
-            // Fallback to bottom with viewport constraints
-            return { side: "bottom", top: space.bottom, left: 0 };
-          };
-
-          const {
-            side: calculatedSide,
-            top: baseTop,
-            left: baseLeft,
-          } = getBestPosition(side);
-          setActualSide(calculatedSide);
-
-          let top = baseTop;
-          let left = baseLeft;
-
-          // Calculate alignment based on actual side
-          switch (align) {
-            case "start":
-              if (calculatedSide === "bottom" || calculatedSide === "top") {
-                left = triggerRect.left + alignOffset;
-              } else {
-                top = triggerRect.top + alignOffset;
-              }
-              break;
-            case "center":
-              if (calculatedSide === "bottom" || calculatedSide === "top") {
-                left =
-                  triggerRect.left +
-                  (triggerRect.width - contentRect.width) / 2 +
-                  alignOffset;
-              } else {
-                top =
-                  triggerRect.top +
-                  (triggerRect.height - contentRect.height) / 2 +
-                  alignOffset;
-              }
-              break;
-            case "end":
-              if (calculatedSide === "bottom" || calculatedSide === "top") {
-                left = triggerRect.right - contentRect.width + alignOffset;
-              } else {
-                top = triggerRect.bottom - contentRect.height + alignOffset;
-              }
-              break;
-          }
-
-          // Ensure content stays within viewport
-          if (left < 0) left = 8;
-          if (left + contentRect.width > viewportWidth)
-            left = viewportWidth - contentRect.width - 8;
-          if (top < 0) top = 8;
-          if (top + contentRect.height > viewportHeight)
-            top = viewportHeight - contentRect.height - 8;
-
-          setPosition({ top, left });
-        };
-
-        requestAnimationFrame(refinePosition);
-      }
+      return () => {
+        cancelAnimationFrame(rafId);
+      };
     }, [
-      isPositioned,
-      side,
-      align,
-      sideOffset,
-      alignOffset,
-      position.top,
-      position.left,
-      contentRef,
       isOpen,
       triggerRef,
+      contentRef,
+      calculateOptimalPosition,
+      isPositioned,
     ]);
+
+    // Cleanup animation on unmount
+    React.useEffect(() => {
+      return () => {
+        if (animationRef.current) {
+          animationRef.current.kill();
+        }
+      };
+    }, []);
 
     if (!isOpen && !forceMount) return null;
 
@@ -480,13 +453,16 @@ const DropdownMenuContent = React.forwardRef<
         ref={combinedRef}
         className={cn(
           "fixed z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 p-1 text-gray-900 dark:text-gray-100 shadow-md",
-          "transition-all duration-200 ease-in-out",
           className
         )}
         style={{
           top: position.top,
           left: position.left,
-          transition: isPositioned ? "none" : "opacity 0.1s ease-out",
+          // CSS optimization: prevent layout thrashing and improve rendering
+          willChange: isOpen ? "opacity, transform" : "auto",
+          contain: "layout style paint",
+          contentVisibility: isOpen ? "visible" : "hidden",
+          opacity: isPositioned ? 1 : 0,
           display: !isOpen && forceMount ? "none" : undefined,
         }}
         data-state={isOpen ? "open" : "closed"}
@@ -508,60 +484,60 @@ interface DropdownMenuItemProps extends React.HTMLAttributes<HTMLDivElement> {
   disabled?: boolean;
 }
 
-const DropdownMenuItem = React.forwardRef<
-  HTMLDivElement,
-  DropdownMenuItemProps
->(
-  (
-    {
-      className,
-      inset = false,
-      variant = "default",
-      disabled = false,
-      children,
-      onClick,
-      ...props
-    },
-    ref
-  ) => {
-    const { setIsOpen } = useDropdownMenu();
-
-    const handleClick = React.useCallback(
-      (event: React.MouseEvent<HTMLDivElement>) => {
-        if (disabled) return;
-        onClick?.(event);
-        setIsOpen(false);
+const DropdownMenuItem = React.memo(
+  React.forwardRef<HTMLDivElement, DropdownMenuItemProps>(
+    (
+      {
+        className,
+        inset = false,
+        variant = "default",
+        disabled = false,
+        children,
+        onClick,
+        ...props
       },
-      [disabled, onClick, setIsOpen]
-    );
+      ref
+    ) => {
+      const { setIsOpen } = useDropdownMenu();
 
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
-          "text-gray-900 dark:text-gray-100",
-          "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100",
-          "focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-gray-800 dark:focus:text-gray-100",
-          "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
-          variant === "destructive" &&
-            "text-red-600 dark:text-red-400 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20 dark:hover:text-red-400 focus:bg-red-50 focus:text-red-700 dark:focus:bg-red-900/20 dark:focus:text-red-400",
-          inset && "pl-8",
-          disabled && "pointer-events-none opacity-50",
-          className
-        )}
-        onClick={handleClick}
-        data-disabled={disabled}
-        data-variant={variant}
-        data-inset={inset}
-        tabIndex={disabled ? -1 : 0}
-        role="menuitem"
-        {...props}
-      >
-        {children}
-      </div>
-    );
-  }
+      const handleClick = React.useCallback(
+        (event: React.MouseEvent<HTMLDivElement>) => {
+          if (disabled) return;
+          onClick?.(event);
+          setIsOpen(false);
+        },
+        [disabled, onClick, setIsOpen]
+      );
+
+      return (
+        <div
+          ref={ref}
+          className={cn(
+            "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none",
+            "text-gray-900 dark:text-gray-100",
+            "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100",
+            "focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-gray-800 dark:focus:text-gray-100",
+            // CSS optimization for hover performance
+            "will-change-auto",
+            variant === "destructive" &&
+              "text-red-600 dark:text-red-400 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20 dark:hover:text-red-400 focus:bg-red-50 focus:text-red-700 dark:focus:bg-red-900/20 dark:focus:text-red-400",
+            inset && "pl-8",
+            disabled && "pointer-events-none opacity-50",
+            className
+          )}
+          onClick={handleClick}
+          data-disabled={disabled}
+          data-variant={variant}
+          data-inset={inset}
+          tabIndex={disabled ? -1 : 0}
+          role="menuitem"
+          {...props}
+        >
+          {children}
+        </div>
+      );
+    }
+  )
 );
 
 DropdownMenuItem.displayName = "DropdownMenuItem";
@@ -574,73 +550,71 @@ interface DropdownMenuCheckboxItemProps
   disabled?: boolean;
 }
 
-const DropdownMenuCheckboxItem = React.forwardRef<
-  HTMLDivElement,
-  DropdownMenuCheckboxItemProps
->(
-  (
-    {
-      className,
-      checked = false,
-      onCheckedChange,
-      disabled = false,
-      children,
-      ...props
-    },
-    ref
-  ) => {
-    useDropdownMenu(); // Get context but don't use setIsOpen
-
-    const handleClick = React.useCallback(
-      (event: React.MouseEvent<HTMLDivElement>) => {
-        if (disabled) return;
-        onCheckedChange?.(!checked);
-        event.stopPropagation();
+const DropdownMenuCheckboxItem = React.memo(
+  React.forwardRef<HTMLDivElement, DropdownMenuCheckboxItemProps>(
+    (
+      {
+        className,
+        checked = false,
+        onCheckedChange,
+        disabled = false,
+        children,
+        ...props
       },
-      [disabled, onCheckedChange, checked]
-    );
+      ref
+    ) => {
+      useDropdownMenu(); // Get context but don't use setIsOpen
 
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "relative flex cursor-default select-none items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-none transition-colors",
-          "text-gray-900 dark:text-gray-100",
-          "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100",
-          "focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-gray-800 dark:focus:text-gray-100",
-          "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
-          disabled && "pointer-events-none opacity-50",
-          className
-        )}
-        onClick={handleClick}
-        data-disabled={disabled}
-        tabIndex={disabled ? -1 : 0}
-        role="menuitemcheckbox"
-        aria-checked={checked}
-        {...props}
-      >
-        <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-          {checked && (
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
+      const handleClick = React.useCallback(
+        (event: React.MouseEvent<HTMLDivElement>) => {
+          if (disabled) return;
+          onCheckedChange?.(!checked);
+          event.stopPropagation();
+        },
+        [disabled, onCheckedChange, checked]
+      );
+
+      return (
+        <div
+          ref={ref}
+          className={cn(
+            "relative flex cursor-default select-none items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-none",
+            "text-gray-900 dark:text-gray-100",
+            "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100",
+            "focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-gray-800 dark:focus:text-gray-100",
+            disabled && "pointer-events-none opacity-50",
+            className
           )}
-        </span>
-        {children}
-      </div>
-    );
-  }
+          onClick={handleClick}
+          data-disabled={disabled}
+          tabIndex={disabled ? -1 : 0}
+          role="menuitemcheckbox"
+          aria-checked={checked}
+          {...props}
+        >
+          <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+            {checked && (
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            )}
+          </span>
+          {children}
+        </div>
+      );
+    }
+  )
 );
 
 DropdownMenuCheckboxItem.displayName = "DropdownMenuCheckboxItem";
@@ -654,59 +628,57 @@ interface DropdownMenuRadioItemProps
   disabled?: boolean;
 }
 
-const DropdownMenuRadioItem = React.forwardRef<
-  HTMLDivElement,
-  DropdownMenuRadioItemProps
->(
-  (
-    {
-      className,
-      value,
-      checked = false,
-      onSelect,
-      disabled = false,
-      children,
-      ...props
-    },
-    ref
-  ) => {
-    useDropdownMenu(); // Get context but don't use setIsOpen
-
-    const handleClick = React.useCallback(
-      (event: React.MouseEvent<HTMLDivElement>) => {
-        if (disabled) return;
-        onSelect?.(value);
-        event.stopPropagation();
+const DropdownMenuRadioItem = React.memo(
+  React.forwardRef<HTMLDivElement, DropdownMenuRadioItemProps>(
+    (
+      {
+        className,
+        value,
+        checked = false,
+        onSelect,
+        disabled = false,
+        children,
+        ...props
       },
-      [disabled, onSelect, value]
-    );
+      ref
+    ) => {
+      useDropdownMenu(); // Get context but don't use setIsOpen
 
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "relative flex cursor-default select-none items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-none transition-colors",
-          "text-gray-900 dark:text-gray-100",
-          "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100",
-          "focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-gray-800 dark:focus:text-gray-100",
-          "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
-          disabled && "pointer-events-none opacity-50",
-          className
-        )}
-        onClick={handleClick}
-        data-disabled={disabled}
-        tabIndex={disabled ? -1 : 0}
-        role="menuitemradio"
-        aria-checked={checked}
-        {...props}
-      >
-        <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-          {checked && <div className="h-2 w-2 rounded-full bg-current" />}
-        </span>
-        {children}
-      </div>
-    );
-  }
+      const handleClick = React.useCallback(
+        (event: React.MouseEvent<HTMLDivElement>) => {
+          if (disabled) return;
+          onSelect?.(value);
+          event.stopPropagation();
+        },
+        [disabled, onSelect, value]
+      );
+
+      return (
+        <div
+          ref={ref}
+          className={cn(
+            "relative flex cursor-default select-none items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-none",
+            "text-gray-900 dark:text-gray-100",
+            "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100",
+            "focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-gray-800 dark:focus:text-gray-100",
+            disabled && "pointer-events-none opacity-50",
+            className
+          )}
+          onClick={handleClick}
+          data-disabled={disabled}
+          tabIndex={disabled ? -1 : 0}
+          role="menuitemradio"
+          aria-checked={checked}
+          {...props}
+        >
+          <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+            {checked && <div className="h-2 w-2 rounded-full bg-current" />}
+          </span>
+          {children}
+        </div>
+      );
+    }
+  )
 );
 
 DropdownMenuRadioItem.displayName = "DropdownMenuRadioItem";
@@ -716,81 +688,90 @@ interface DropdownMenuLabelProps extends React.HTMLAttributes<HTMLDivElement> {
   inset?: boolean;
 }
 
-const DropdownMenuLabel = React.forwardRef<
-  HTMLDivElement,
-  DropdownMenuLabelProps
->(({ className, inset = false, children, ...props }, ref) => {
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        "px-2 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300",
-        inset && "pl-8",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-});
+const DropdownMenuLabel = React.memo(
+  React.forwardRef<HTMLDivElement, DropdownMenuLabelProps>(
+    ({ className, inset = false, children, ...props }, ref) => {
+      return (
+        <div
+          ref={ref}
+          className={cn(
+            "px-2 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300",
+            inset && "pl-8",
+            className
+          )}
+          {...props}
+        >
+          {children}
+        </div>
+      );
+    }
+  )
+);
 
 DropdownMenuLabel.displayName = "DropdownMenuLabel";
 
 // DropdownMenuSeparator Component (following Radix UI patterns)
 type DropdownMenuSeparatorProps = React.HTMLAttributes<HTMLDivElement>;
 
-const DropdownMenuSeparator = React.forwardRef<
-  HTMLDivElement,
-  DropdownMenuSeparatorProps
->(({ className, ...props }, ref) => {
-  return (
-    <div
-      ref={ref}
-      className={cn("my-1 h-px bg-gray-200 dark:bg-gray-700 -mx-1", className)}
-      {...props}
-    />
-  );
-});
+const DropdownMenuSeparator = React.memo(
+  React.forwardRef<HTMLDivElement, DropdownMenuSeparatorProps>(
+    ({ className, ...props }, ref) => {
+      return (
+        <div
+          ref={ref}
+          className={cn(
+            "my-1 h-px bg-gray-200 dark:bg-gray-700 -mx-1",
+            className
+          )}
+          role="separator"
+          aria-orientation="horizontal"
+          {...props}
+        />
+      );
+    }
+  )
+);
 
 DropdownMenuSeparator.displayName = "DropdownMenuSeparator";
 
 // DropdownMenuShortcut Component (following Radix UI patterns)
 type DropdownMenuShortcutProps = React.HTMLAttributes<HTMLSpanElement>;
 
-const DropdownMenuShortcut = React.forwardRef<
-  HTMLSpanElement,
-  DropdownMenuShortcutProps
->(({ className, children, ...props }, ref) => {
-  return (
-    <span
-      ref={ref}
-      className={cn(
-        "ml-auto text-xs tracking-widest text-gray-500 dark:text-gray-400",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </span>
-  );
-});
+const DropdownMenuShortcut = React.memo(
+  React.forwardRef<HTMLSpanElement, DropdownMenuShortcutProps>(
+    ({ className, children, ...props }, ref) => {
+      return (
+        <span
+          ref={ref}
+          className={cn(
+            "ml-auto text-xs tracking-widest text-gray-500 dark:text-gray-400",
+            className
+          )}
+          {...props}
+        >
+          {children}
+        </span>
+      );
+    }
+  )
+);
 
 DropdownMenuShortcut.displayName = "DropdownMenuShortcut";
 
 // DropdownMenuGroup Component (following Radix UI patterns)
 type DropdownMenuGroupProps = React.HTMLAttributes<HTMLDivElement>;
 
-const DropdownMenuGroup = React.forwardRef<
-  HTMLDivElement,
-  DropdownMenuGroupProps
->(({ className, children, ...props }, ref) => {
-  return (
-    <div ref={ref} className={cn("", className)} role="group" {...props}>
-      {children}
-    </div>
-  );
-});
+const DropdownMenuGroup = React.memo(
+  React.forwardRef<HTMLDivElement, DropdownMenuGroupProps>(
+    ({ className, children, ...props }, ref) => {
+      return (
+        <div ref={ref} className={cn("", className)} role="group" {...props}>
+          {children}
+        </div>
+      );
+    }
+  )
+);
 
 DropdownMenuGroup.displayName = "DropdownMenuGroup";
 
@@ -811,41 +792,42 @@ interface DropdownMenuSubTriggerProps
   inset?: boolean;
 }
 
-const DropdownMenuSubTrigger = React.forwardRef<
-  HTMLDivElement,
-  DropdownMenuSubTriggerProps
->(({ className, inset = false, children, ...props }, ref) => {
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
-        "text-gray-900 dark:text-gray-100",
-        "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100",
-        "focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-gray-800 dark:focus:text-gray-100",
-        inset && "pl-8",
-        className
-      )}
-      {...props}
-    >
-      {children}
-      <svg
-        className="ml-auto h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 5l7 7-7 7"
-        />
-      </svg>
-    </div>
-  );
-});
+const DropdownMenuSubTrigger = React.memo(
+  React.forwardRef<HTMLDivElement, DropdownMenuSubTriggerProps>(
+    ({ className, inset = false, children, ...props }, ref) => {
+      return (
+        <div
+          ref={ref}
+          className={cn(
+            "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
+            "text-gray-900 dark:text-gray-100",
+            "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100",
+            "focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-gray-800 dark:focus:text-gray-100",
+            inset && "pl-8",
+            className
+          )}
+          {...props}
+        >
+          {children}
+          <svg
+            className="ml-auto h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </div>
+      );
+    }
+  )
+);
 
 DropdownMenuSubTrigger.displayName = "DropdownMenuSubTrigger";
 
@@ -858,37 +840,40 @@ interface DropdownMenuSubContentProps
   forceMount?: boolean;
 }
 
-const DropdownMenuSubContent = React.forwardRef<
-  HTMLDivElement,
-  DropdownMenuSubContentProps
->(
-  (
-    {
-      className,
-      side = "right", // eslint-disable-line @typescript-eslint/no-unused-vars
-      align = "start", // eslint-disable-line @typescript-eslint/no-unused-vars
-      sideOffset = 4, // eslint-disable-line @typescript-eslint/no-unused-vars
-      alignOffset = 0, // eslint-disable-line @typescript-eslint/no-unused-vars
-      forceMount = false, // eslint-disable-line @typescript-eslint/no-unused-vars
-      children,
-      ...props
-    },
-    ref
-  ) => {
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 p-1 text-gray-900 dark:text-gray-100 shadow-lg",
-          "transition-all duration-300 ease-in-out",
-          className
-        )}
-        {...props}
-      >
-        {children}
-      </div>
-    );
-  }
+const DropdownMenuSubContent = React.memo(
+  React.forwardRef<HTMLDivElement, DropdownMenuSubContentProps>(
+    (
+      {
+        className,
+        side = "right", // eslint-disable-line @typescript-eslint/no-unused-vars
+        align = "start", // eslint-disable-line @typescript-eslint/no-unused-vars
+        sideOffset = 4, // eslint-disable-line @typescript-eslint/no-unused-vars
+        alignOffset = 0, // eslint-disable-line @typescript-eslint/no-unused-vars
+        forceMount = false, // eslint-disable-line @typescript-eslint/no-unused-vars
+        children,
+        ...props
+      },
+      ref
+    ) => {
+      return (
+        <div
+          ref={ref}
+          className={cn(
+            "z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 p-1 text-gray-900 dark:text-gray-100 shadow-lg",
+            className
+          )}
+          style={{
+            // CSS optimization for submenu
+            willChange: "opacity, transform",
+            contain: "layout style paint",
+          }}
+          {...props}
+        >
+          {children}
+        </div>
+      );
+    }
+  )
 );
 
 DropdownMenuSubContent.displayName = "DropdownMenuSubContent";
