@@ -184,9 +184,12 @@ section {
   line-height: 1.6;
 }
 
-/* Custom scrollbar */
+/* ============================================
+   GLOBAL SCROLLBAR (fallback)
+   ============================================ */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -200,6 +203,123 @@ section {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* ============================================
+   SIDEBAR SCROLLBAR - Accessible & Modern
+   ============================================ */
+
+/* Scroll region container */
+.sidebar-nav-scroll {
+  /* Reserve space for scrollbar to prevent layout shift (stable gutter) */
+  scrollbar-gutter: stable;
+
+  /* Smooth scroll behavior (respect reduced motion below) */
+  scroll-behavior: smooth;
+
+  /* Firefox: thin scrollbar with accessible colors */
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #e2e8f0;
+
+  /* Touch: momentum scrolling */
+  -webkit-overflow-scrolling: touch;
+
+  /* Contain scroll so it doesn't propagate to body */
+  overscroll-behavior-y: contain;
+
+  /* Focus ring for keyboard users (accessibility) */
+  outline: none;
+}
+
+.sidebar-nav-scroll:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+.dark .sidebar-nav-scroll:focus-visible {
+  outline-color: #60a5fa;
+}
+
+/* Dark theme sidebar scrollbar (Firefox) */
+.dark .sidebar-nav-scroll {
+  scrollbar-color: #475569 #1e293b;
+}
+
+/* WebKit (Chrome, Safari, Edge): Sidebar scrollbar */
+.sidebar-nav-scroll::-webkit-scrollbar {
+  width: 10px;
+  /* Min 10px for touch/accessibility; visible but not bulky */
+}
+
+.sidebar-nav-scroll::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border-radius: 0;
+  margin: 4px 0;
+}
+
+.sidebar-nav-scroll::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 5px;
+  border: 2px solid #e2e8f0;
+  min-height: 40px;
+  /* Sufficient hit area for pointer/touch */
+}
+
+.sidebar-nav-scroll::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.sidebar-nav-scroll::-webkit-scrollbar-thumb:active {
+  background: #475569;
+}
+
+/* Corner where vertical + horizontal meet (if ever used) */
+.sidebar-nav-scroll::-webkit-scrollbar-corner {
+  background: #e2e8f0;
+}
+
+/* Dark theme - WebKit */
+.dark .sidebar-nav-scroll::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark .sidebar-nav-scroll::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-color: #1e293b;
+}
+
+.dark .sidebar-nav-scroll::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.dark .sidebar-nav-scroll::-webkit-scrollbar-thumb:active {
+  background: #94a3b8;
+}
+
+.dark .sidebar-nav-scroll::-webkit-scrollbar-corner {
+  background: #1e293b;
+}
+
+/* High contrast mode support (accessibility) */
+@media (prefers-contrast: high) {
+  .sidebar-nav-scroll::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-width: 1px;
+  }
+
+  .dark .sidebar-nav-scroll::-webkit-scrollbar-thumb,
+  .sidebar-desktop .sidebar-nav-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-color: #0f172a;
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-nav-scroll {
+    scroll-behavior: auto;
+  }
 }
 
 /* ============================================
@@ -265,12 +385,7 @@ section {
   transform: translateZ(0);
 }
 
-/* Optimize scrollable sidebar content */
-.sidebar-desktop .overflow-y-auto {
-  /* Better scroll performance */
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-}
+/* Optimize scrollable sidebar content (handled in .sidebar-nav-scroll above) */
 
 /* Reduce will-change usage - only when actively transitioning */
 .sidebar-desktop:not([data-state]) {

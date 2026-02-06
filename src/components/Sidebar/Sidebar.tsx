@@ -1259,8 +1259,13 @@ const SidebarContent = React.memo(
                 <div className="border-t border-slate-200 dark:border-slate-800" />
               )}
 
-              {/* Content - Scrollable */}
-              <div className="flex-1 overflow-y-auto">
+              {/* Content - Scrollable (accessible scrollbar) */}
+              <div
+                className="sidebar-nav-scroll flex-1 overflow-y-auto overflow-x-hidden"
+                role="region"
+                aria-label="Sidebar navigation menu"
+                tabIndex={0}
+              >
                 {data.sidebarSections.map((section, index) => (
                   <NavSection
                     key={index}
@@ -1317,8 +1322,13 @@ const SidebarContent = React.memo(
             <div className="border-t border-slate-200 dark:border-slate-800" />
           )}
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto">
+          {/* Content (accessible scrollbar) */}
+          <div
+            className="sidebar-nav-scroll flex-1 overflow-y-auto overflow-x-hidden"
+            role="region"
+            aria-label="Sidebar navigation menu"
+            tabIndex={0}
+          >
             {data.sidebarSections.map((section, index) => (
               <NavSection
                 key={index}
