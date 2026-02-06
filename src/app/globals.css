@@ -201,3 +201,100 @@ section {
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* ============================================
+   OPTIMIZED SIDEBAR ANIMATIONS
+   ============================================ */
+
+/* Desktop Sidebar - GPU Accelerated Width Transition */
+.sidebar-desktop {
+  /* Use fixed width for better performance */
+  width: 256px;
+  transition: width 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* GPU acceleration */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+
+  /* Performance optimizations */
+  contain: layout style paint;
+  content-visibility: auto;
+}
+
+.sidebar-desktop[data-state="collapsed"] {
+  width: 64px;
+}
+
+/* Optimize sidebar content during transition */
+.sidebar-desktop[data-state="collapsed"] .flex {
+  overflow: hidden;
+}
+
+/* Prevent text selection during animation for smoother performance */
+.sidebar-desktop {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.sidebar-desktop * {
+  -webkit-user-select: auto;
+  user-select: auto;
+}
+
+/* Mobile Sidebar - Transform-based (already GSAP animated) */
+/* No additional CSS needed for mobile as GSAP handles it */
+
+/* Optimize sidebar items for better rendering */
+.sidebar-item,
+.sidebar-sub-item {
+  /* GPU acceleration for hover states */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+
+  /* Smooth transitions */
+  transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Remove transform transitions to prevent layout jank */
+.sidebar-item:hover,
+.sidebar-sub-item:hover {
+  /* Only animate background and color - not transform */
+  transform: translateZ(0);
+}
+
+/* Optimize scrollable sidebar content */
+.sidebar-desktop .overflow-y-auto {
+  /* Better scroll performance */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Reduce will-change usage - only when actively transitioning */
+.sidebar-desktop:not([data-state]) {
+  will-change: auto;
+}
+
+/* Force GPU layer creation only during state transition */
+@media (prefers-reduced-motion: no-preference) {
+  .sidebar-desktop[data-state] {
+    will-change: width;
+  }
+
+  /* Remove will-change after transition completes */
+  .sidebar-desktop {
+    transition: width 0.15s cubic-bezier(0.4, 0, 0.2, 1), will-change 0s 0.15s;
+  }
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-desktop,
+  .sidebar-item,
+  .sidebar-sub-item {
+    transition: none !important;
+    animation: none !important;
+  }
+}
